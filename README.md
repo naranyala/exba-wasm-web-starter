@@ -1,47 +1,54 @@
-# Custom WASM-Oriented Web Framework
+# BAEX Framework
 
-![bee-holding-axe](./bee-holding-axe.jpg)
+BAEX is a high-performance web framework that bridges native browser Custom Elements with computational logic written in Rust via a stratified Intermediate Representation (IR).
 
-A high-performance web framework bridging native browser Custom Elements with computational logic written in Rust.
+## Core Architecture
 
-## Architecture
+The framework utilizes a decoupled architecture to ensure stability and performance:
 
-- **Host (TypeScript)**: Manages DOM lifecycle, event handling, and renders UI via Custom Elements.
-- **Provider (Rust/WASM)**: High-performance business logic, state management, and data transformations, compiled to WASM.
-- **Styling**: CSS-in-JS using `goober` for modular, performant styles, with `clsx` for dynamic class management.
+### 1. Stratified Intermediate Representation (IR)
+Instead of direct DOM manipulation from WASM, BAEX uses two layers of IR:
+- High-Level IR (HLIR): Defines the intent of an action (e.g., UIUpdate, SystemNotification).
+- Low-Level IR (LLIR): Defines concrete browser mutations (e.g., UpdateText, SetAttribute, TriggerEvent).
 
-## Feature List
+This allows the business logic to remain agnostic of the final rendering implementation.
 
-- **Native Custom Elements**: Framework-agnostic UI components based on standard Web Components.
-- **Rust WASM Integration**: Seamless bidirectional communication between TypeScript and Rust.
-- **CSS-in-JS Styling**: Performant, scoped styling with `goober`.
-- **Lightweight Core**: Minimal overhead with no dependency on heavy virtual DOM libraries.
+### 2. Reactive State Model
+BAEX implements a reactive state system using a Proxy-based approach:
+- Immutable State: Leverages Immer to ensure state transitions are predictable.
+- Subscription Model: Components can subscribe to specific state keys and automatically re-render when those values change.
+- Automatic IR Dispatch: State changes can automatically trigger IR bundles to synchronize the UI.
 
-## Upcoming Features (In-Development)
+### 3. Component System
+Built on native Web Components:
+- BaexComponent: A base class that provides built-in state subscription and WASM bridge access.
+- Decorators: Provides @Component, @State, and @WasmMethod for improved developer experience.
 
-- **Declarative Bindings**: Introduce decorators like `@Component`, `@State`, and `@WasmMethod` to simplify TS-Rust bindings.
-- **WASM-Based Router**: Moving route management logic into Rust for faster page transitions.
-- **Enhanced Bridge**: Type-safe automated serialization/deserialization of complex data structures between Rust and TypeScript.
-- **Server-Side Rendering (SSR)**: Experimental support for hydrating Rust-managed state on the server.
+## Technical Stack
+
+- Frontend: TypeScript, Rsbuild, Tailwind CSS
+- Backend: Rust, wasm-bindgen, serde
+- State: Immer, Zod (for IR validation)
+- Testing: Vitest
 
 ## Setup
 
-Install the dependencies:
-
+Install dependencies:
 ```bash
 npm install
 ```
 
-## Get started
-
-Start the dev server:
-
+Start the development server:
 ```bash
 npm run dev
 ```
 
-Build the app for production:
-
+Build for production:
 ```bash
 npm run build
+```
+
+Run the test suite:
+```bash
+npm run test
 ```

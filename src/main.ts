@@ -2,8 +2,16 @@ import './style.css'
 import './components/tab-bar.js'
 import { BAEX } from './baex';
 import { BaexGreeting } from './components/baex-greeting';
+import { ReactiveStateProxy } from './state';
+import init, { greet, process_action } from '../public/wasm/wasm_logic';
 
 BAEX.register('baex-greeting', BaexGreeting);
+
+// Initialize Reactive State
+const appState = new ReactiveStateProxy({
+  counter: 0,
+  user: 'Developer'
+});
 
 // Application State
 const tabs = new Map(); // id -> { label, action }
@@ -142,8 +150,30 @@ function initApp() {
   app.innerHTML = `
     <!-- Native Web Component Tab Bar -->
     <tab-bar id="main-tab-bar"></tab-bar>
-    <div class="p-4 flex justify-center bg-zinc-800 border-b border-zinc-700">
+    <div class="p-4 flex flex-col items-center gap-4 bg-zinc-800 border-b border-zinc-700">
       <baex-greeting name="Developer"></baex-greeting>
+      <div id="greeting-box" class="text-sm font-mono text-zinc-400">IR Output will appear here...</div>
+      <div id="state-counter" class="text-xs text-indigo-300">Counter: 0</div>
+      <div class="flex gap-2">
+        <button 
+          onclick="window.triggerBaexAction('hello')"
+          class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs hover:bg-indigo-500 transition-colors"
+        >
+          Trigger IR Action
+        </button>
+        <button 
+          onclick="window.incrementCounter()"
+          class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs hover:bg-emerald-500 transition-colors"
+        >
+          Increment State
+        </button>
+        <button 
+          onclick="window.triggerBaexAction('error_test')"
+          class="px-4 py-2 bg-red-600 text-white rounded-lg text-xs hover:bg-red-500 transition-colors"
+        >
+          Simulate Anomaly
+        </button>
+      </div>
     </div>
 
     <div class="min-h-screen bg-zinc-900 text-zinc-100 p-0 pt-16">
@@ -198,17 +228,26 @@ function initApp() {
     renderTabBar();
   });
 
-  (window as any).dispatchMenuAction = (id: string) => {
-      const item = MENU_ITEMS.find(i => i.id === id);
-      if (item) {
-          tabs.set(item.id, { label: item.label, action: item.action });
-          activeTabId = item.id;
-          item.action();
-          renderTabBar();
-      }
-  };
+    (window as any).dispatchMenuAction = (id: string) => {
+        const item = MENU_ITEMS.find(i => i.id === id);
+        if (item) {
+            tabs.set(item.id, { label: item.label, action: item.action });
+            activeTabId = item.id;
+            item.action();
+            renderTabBar();
+        }
+    };
 
-  (window as any).toggleSection = toggleSection;
+    (window as any).triggerBaexAction = async (actionId: string) => {
+        await BAEX.callBridge('process_action', actionId);
+    };
+
+    (window as any).incrementCounter = () => {
+        appState.value.counter++;
+    };
+
+    (window as any).toggleSection = toggleSection;
+
 
   const searchInput = document.querySelector<HTMLInputElement>('#menu-search');
   if (searchInput) {
@@ -223,11 +262,11 @@ function initApp() {
   renderExamples();
 }
 
-import init, { greet } from '../public/wasm/wasm_logic';
+import init, { greet, process_action } from '../public/wasm/wasm_logic';
 
 async function loadWasm() {
   try {
-    await init();
+    await BAEX.initWasm(init);
     console.log('Wasm Engine initialized');
     (window as any).wasmGreet = greet;
 
@@ -237,6 +276,11 @@ async function loadWasm() {
         if (method === 'greet') {
           greet(args[0]);
           return `Greeted ${args[0]}`;
+        }
+        if (method === 'process_action') {
+          const ir = process_action(args[0]);
+          BAEX.dispatchIR(ir);
+          return ir;
         }
         throw new Error(`Method ${method} not found in bridge`);
       },
@@ -249,7 +293,9 @@ async function loadWasm() {
   }
 }
 
-initApp();
-loadWasm();
+document.addEventListener('DOMContentLoaded', () => {
+  initApp();
+  loadWasm();
+});
 
 // Removed ipcRenderer call
