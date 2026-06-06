@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BAEX, IRProcessor, IRBundle } from './baex';
-import { ReactiveStateProxy } from './state';
+import { BAEX } from './core/baex';
+import { ReactiveStateProxy } from './state/proxy';
+import type { IRBundle } from './core/schema';
 
 describe('BAEX Advanced Features', () => {
   beforeEach(() => {
@@ -12,9 +13,17 @@ describe('BAEX Advanced Features', () => {
   });
 
   describe('ReactiveStateProxy', () => {
-    it('should dispatch IR when state changes', () => {
+    it('should dispatch IR when state changes (via listener)', () => {
       const dispatchSpy = vi.spyOn(BAEX, 'dispatchIR');
-      const state = new ReactiveStateProxy({ counter: 0 });
+      const state = new ReactiveStateProxy({ counter: 0 }, {
+        onPropertyUpdate: (prop, value) => {
+          BAEX.dispatchIR({
+            version: '1.0.0',
+            hlir: null,
+            llir: [{ type: 'UpdateText', id: `state-${prop}`, text: String(value) }]
+          });
+        }
+      });
       
       state.value.counter = 1;
       

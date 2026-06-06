@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BAEX, IRProcessor, IRBundle, LLIR } from './baex';
+import { BAEX } from './core/baex';
+import { IRProcessor } from './core/processor';
+import type { IRBundle } from './core/schema';
 
 describe('BAEX IR System', () => {
   beforeEach(() => {

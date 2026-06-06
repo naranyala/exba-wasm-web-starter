@@ -1,8 +1,9 @@
 import { produce } from 'immer';
-import { BAEX, IRBundle } from './baex';
+import { BAEX } from '../core/baex';
 
 export interface StateOptions {
   onUpdate?: (newState: any) => void;
+  onPropertyUpdate?: (prop: string, value: any, oldValue: any) => void;
 }
 
 export class ReactiveStateProxy {
@@ -34,21 +35,15 @@ export class ReactiveStateProxy {
   private handleUpdate(prop: string, value: any, oldValue: any) {
     BAEX.log('STATE_CHANGE', { prop, oldValue, newValue: value });
     
-    // 1. Notify subscribers for fine-grained component updates
+    // Notify subscribers for fine-grained component updates
     BAEX.notify(prop, value);
 
-    // 2. Also generate a global IR bundle for the change (legacy/global support)
-    const bundle: IRBundle = {
-      version: '1.0.0',
-      hlir: { type: 'UIUpdate', target_screen: 'GlobalState', state: prop },
-      llir: [
-        { type: 'Log', message: `State ${prop} changed to ${value}` },
-        { type: 'UpdateText', id: `state-${prop}`, text: String(value) }
-      ]
-    };
+    // Call property update listener if provided
+    if (this.options.onPropertyUpdate) {
+      this.options.onPropertyUpdate(prop, value, oldValue);
+    }
     
-    BAEX.dispatchIR(bundle);
-    
+    // Call global update listener if provided
     if (this.options.onUpdate) {
       this.options.onUpdate(this.state);
     }

@@ -1,16 +1,17 @@
-// src/components/tab-bar.js
-class TabBar extends HTMLElement {
+// src/components/tab-bar/index.ts
+export class TabBar extends HTMLElement {
+  private tabs: { id: string; label: string }[] = [];
+  private activeTabId: string | null = null;
+
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this.tabs = [];
-    this.activeTabId = null;
     this.render();
   }
 
   static get observedAttributes() { return ['tabs']; }
 
-  attributeChangedCallback(name, oldValue, newValue) {
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     if (name === 'tabs') {
       this.tabs = JSON.parse(newValue);
       this.render();
@@ -18,6 +19,7 @@ class TabBar extends HTMLElement {
   }
 
   render() {
+    if (!this.shadowRoot) return;
     this.shadowRoot.innerHTML = `
       <style>
         :host {
@@ -60,12 +62,12 @@ class TabBar extends HTMLElement {
     `;
     this.shadowRoot.querySelectorAll('.tab').forEach(el => {
       el.addEventListener('click', () => {
-        this.dispatchEvent(new CustomEvent('tab-selected', { detail: el.dataset.id }));
+        this.dispatchEvent(new CustomEvent('tab-selected', { detail: (el as HTMLElement).dataset.id }));
       });
     });
   }
 
-  setActive(id) {
+  setActive(id: string) {
     this.activeTabId = id;
     this.render();
   }

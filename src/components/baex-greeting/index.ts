@@ -1,4 +1,4 @@
-import { BaexComponent } from '../baex';
+import { BaexComponent } from '../../core/component';
 
 export class BaexGreeting extends BaexComponent {
   static get observedAttributes() {

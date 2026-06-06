@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { screen } from '@testing-library/dom';
-import './tab-bar.js';
+import './index.js';
 
 describe('tab-bar component', () => {
   it('should render', () => {

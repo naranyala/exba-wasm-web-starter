@@ -1,87 +1,19 @@
+mod ir;
+mod actions;
+
 use wasm_bindgen::prelude::*;
-use serde::{Serialize, Deserialize};
-use thiserror::Error;
-use tracing::{info, warn, error};
+use tracing::error;
+use crate::ir::*;
+use crate::actions::*;
 
 #[wasm_bindgen]
 extern "C" {
     fn alert(s: &str);
 }
 
-#[derive(Error, Debug)]
-pub enum IRError {
-    #[error("Unknown action ID: {0}")]
-    UnknownAction(String),
-    #[error("Serialization error: {0}")]
-    Serialization(String),
-}
-
-// =============================================================================
-// IR RULES:
-// 1. HLIR (High-Level IR) defines intent.
-// 2. LLIR (Low-Level IR) defines concrete DOM/Browser mutations.
-// 3. All IR sequences must be atomic per action.
-// 4. ANOMALIES must be explicitly logged via the Log instruction.
-// =============================================================================
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum HLIR {
-    UIUpdate { target_screen: String, state: String },
-    SystemNotification { level: String, msg: String },
-    ExternalLink { url: String, target: String },
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum LLIR {
-    UpdateText { id: String, text: String },
-    SetAttribute { id: String, attr: String, value: String },
-    TriggerEvent { id: String, event: String },
-    Log { message: String },
-    Anomaly { code: String, details: String },
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct IRBundle {
-    pub version: String,
-    pub hlir: Option<HLIR>,
-    pub llir: Vec<LLIR>,
-}
-
 #[wasm_bindgen]
 pub fn greet(name: &str) {
     alert(&format!("Hello, {}!", name));
-}
-
-fn get_ir_bundle(action_id: &str) -> Result<IRBundle, IRError> {
-    info!("Generating IR for action: {}", action_id);
-    match action_id {
-        "hello" => Ok(IRBundle {
-            version: "1.0.0".into(),
-            hlir: Some(HLIR::UIUpdate { 
-                target_screen: "Greeting".into(), 
-                state: "Active".into() 
-            }),
-            llir: vec![
-                LLIR::Log { message: "Processing hello action".into() },
-                LLIR::UpdateText { id: "greeting-box".into(), text: format!("Hello, User!") },
-                LLIR::SetAttribute { id: "greeting-box".into(), attr: "class".into(), value: "highlighted".into() },
-            ],
-        }),
-        "error_test" => Ok(IRBundle {
-            version: "1.0.0".into(),
-            hlir: None,
-            llir: vec![
-                LLIR::Anomaly { 
-                    code: "ERR_001".into(), 
-                    details: "Simulated system anomaly for testing".into() 
-                },
-            ],
-        }),
-        _ => {
-            warn!("Unknown action requested: {}", action_id);
-            Err(IRError::UnknownAction(action_id.to_string()))
-        }
-    }
 }
 
 #[wasm_bindgen]
@@ -106,6 +38,7 @@ pub fn process_action(action_id: &str) -> JsValue {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::actions::get_ir_bundle;
 
     #[test]
     fn test_get_ir_bundle_hello() {

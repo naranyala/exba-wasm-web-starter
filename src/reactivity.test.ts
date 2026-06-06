@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BAEX } from './baex';
-import { ReactiveStateProxy } from './state';
+import { BAEX } from './core/baex';
+import { ReactiveStateProxy } from './state/proxy';
 
 class MockComponent extends HTMLElement {
   renderCount = 0;
