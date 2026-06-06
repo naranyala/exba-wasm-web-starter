@@ -1,6 +1,6 @@
 # Custom WASM-Oriented Web Framework
 
-![bee-holding-axe](./bee-holding-axe.png)
+![bee-holding-axe](./bee-holding-axe.jpg)
 
 A high-performance web framework bridging native browser Custom Elements with computational logic written in Rust.
 
