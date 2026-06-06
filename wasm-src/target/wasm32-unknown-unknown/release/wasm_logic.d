@@ -1,0 +1,1 @@
+/media/naranyala/Data/projects-remote/browserapiextended-web-wasm-goobercss/wasm-src/target/wasm32-unknown-unknown/release/wasm_logic.wasm: /media/naranyala/Data/projects-remote/browserapiextended-web-wasm-goobercss/wasm-src/src/lib.rs

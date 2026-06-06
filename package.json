@@ -4,17 +4,24 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "rsbuild build",
+    "build": "cd wasm-src && wasm-pack build --target web --out-dir ../public/wasm && cd .. && rsbuild build",
     "check": "biome check --write",
     "dev": "rsbuild",
     "format": "biome format --write",
-    "preview": "rsbuild preview"
+    "preview": "rsbuild preview",
+    "test": "vitest"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
     "@rsbuild/core": "^2.0.9",
-    "@tailwindcss/postcss": "^4.3.0",
-    "tailwindcss": "^4.3.0",
-    "typescript": "^6.0.3"
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "jsdom": "^29.1.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "goober": "^2.1.19"
   }
 }
