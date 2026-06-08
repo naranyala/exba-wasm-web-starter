@@ -1,5 +1,7 @@
 # BAEX Framework
 
+![bee-holding-axe](./bee-holding-axe.jpg)
+
 BAEX is a high-performance web framework that bridges native browser Custom Elements with computational logic written in Rust via a unified Intermediate Representation (IR).
 
 ## Core Architecture
@@ -39,12 +41,12 @@ A lightweight runtime compiler transforms templates into executable JavaScript:
 
 1. **Definition**: You define a component via `defineComponent`, providing an `initialState` and a `render` function.
 2. **Initialization**: Upon mounting, BAEX creates a **Reactive Proxy** of the state. Each property in the state is linked to a **Signal**.
-3. **Rendering**: 
+3. **Rendering**:
    - The `render` function generates an HTML string.
    - The `TemplateCompiler` replaces `{{var}}` with `<span data-bind="var"></span>`.
    - The result is injected into the Shadow DOM via `innerHTML`.
 4. **Binding**: The framework scans the newly injected DOM for `data-bind` attributes and connects those elements directly to the corresponding **Signals**.
-5. **Reactive Loop**: 
+5. **Reactive Loop**:
    - When `setState` or a `reducer` modifies the state, the Proxy triggers the Signal.
    - The Signal notifies only the specific DOM elements bound to that variable, updating their `textContent` without re-rendering the entire component.
 6. **WASM Integration**: For complex logic, the component calls `WasmBridge.call()`. The request is serialized to JSON, processed by Rust, and the result is returned to the JS state, triggering the reactive loop.
