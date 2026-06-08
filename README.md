@@ -1,6 +1,8 @@
 # BAEX Framework
 
-![bee-holding-axe](./bee-holding-axe.jpg)
+<!-- ![bee-holding-axe](./bee-holding-axe.jpg) -->
+
+<img src="./bee-holding-axe.jpg" width="50%">
 
 BAEX is a high-performance web framework that bridges native browser Custom Elements with computational logic written in Rust via a unified Intermediate Representation (IR).
 
