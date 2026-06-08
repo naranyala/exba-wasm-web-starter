@@ -18,6 +18,23 @@ export function generateHTML(entries: DocEntry[], title: string = 'API Documenta
     groups[entry.module][container].push(entry);
   });
 
+  const documentedCount = entries.filter(e => e.description !== '(No description provided)').length;
+  const undocumentedCount = entries.length - documentedCount;
+
+  // Generate grouped index for sidebar
+  let groupedIndexHtml = '';
+  for (const [module, containers] of Object.entries(groups)) {
+    groupedIndexHtml += `<div class="nav-group">
+      <span class="nav-group-title">${module}</span>`;
+    for (const [container, members] of Object.entries(containers)) {
+      groupedIndexHtml += `
+        <ul class="nav-container-list">
+          ${members.map(m => `<li data-name="${m.name.toLowerCase()}"><a href="#${m.name}">${m.name}</a></li>`).join('')}
+        </ul>`;
+    }
+    groupedIndexHtml += `</div>`;
+  }
+
   let htmlContent = '';
   for (const [module, containers] of Object.entries(groups)) {
     htmlContent += `<section class="module-group">
@@ -28,28 +45,62 @@ export function generateHTML(entries: DocEntry[], title: string = 'API Documenta
         <div class="container-group">
           <h3 class="container-name">${container}</h3>
           ${members.map(entry => `
-            <div class="entry" id="${entry.name}" data-name="${entry.name.toLowerCase()}">
+            <div class="entry" 
+                 id="${entry.name}" 
+                 data-name="${entry.name.toLowerCase()}" 
+                 data-documented="${entry.description !== '(No description provided)'}">
               <div class="entry-header">
-                <span class="type">${entry.type}</span>
-                <span class="name">${entry.name}</span>
-                ${entry.isPublic ? '<span class="badge pub">public</span>' : ''}
+                <div class="header-left">
+                  <span class="type">${entry.type}</span>
+                  <span class="name">${entry.name}</span>
+                </div>
+                <div class="header-right">
+                  ${entry.isPublic ? '<span class="badge pub">public</span>' : ''}
+                </div>
               </div>
-              ${entry.signature ? `<div class="signature"><code>${entry.signature}</code></div>` : ''}
+              ${entry.signature ? `
+                <div class="signature-wrapper">
+                  <div class="signature"><code>${entry.signature}</code></div>
+                  <button class="copy-btn" onclick="copySignature('${entry.signature.replace(/'/g, "\\'")}')">
+                    Copy
+                  </button>
+                </div>` : ''}
               <div class="description">${formatDescription(entry.description)}</div>
               ${entry.params ? `
                 <div class="section">
-                  <strong>Parameters:</strong>
-                  <ul>
-                    ${entry.params.map(p => `<li><code>${p.name}</code> <span class="type-small">${p.type}</span> - ${p.description}</li>`).join('')}
-                  </ul>
+                  <strong>Parameters</strong>
+                  <table class="params-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${entry.params.map(p => `
+                        <tr>
+                          <td><code>${p.name}</code></td>
+                          <td><span class="type-small">${p.type}</span></td>
+                          <td>${p.description}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
                 </div>
               ` : ''}
               ${entry.returns ? `
-                <div class="section">
-                  <strong>Returns:</strong> <code>${entry.returns.type}</code> ${entry.returns.description}
+                <div class="section returns-section">
+                  <strong>Returns</strong>
+                  <div class="returns-content">
+                    <code>${entry.returns.type}</code>
+                    <span class="returns-desc">${entry.returns.description}</span>
+                  </div>
                 </div>
               ` : ''}
-              <div class="file-path">File: ${entry.filePath} (Line ${entry.lineNumber})</div>
+              <div class="file-path">
+                <span class="path-icon">📁</span> ${entry.filePath} <span class="line-info">(Line ${entry.lineNumber})</span>
+              </div>
             </div>
           `).join('')}
         </div>
@@ -57,8 +108,6 @@ export function generateHTML(entries: DocEntry[], title: string = 'API Documenta
     }
     htmlContent += `</section>`;
   }
-
-  const index = entries.map(entry => `<li data-name="${entry.name.toLowerCase()}"><a href="#${entry.name}">${entry.name}</a></li>`).join('');
 
   return `
 <!DOCTYPE html>
@@ -101,12 +150,22 @@ export function generateHTML(entries: DocEntry[], title: string = 'API Documenta
             width: 300px;
             position: sticky;
             top: 2rem;
-            height: fit-content;
+            max-height: calc(100vh - 4rem);
+            overflow-y: auto;
             background: var(--card-bg);
             padding: 1.5rem;
             border-radius: 12px;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border);
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+        nav::-webkit-scrollbar {
+            width: 6px;
+        }
+        nav::-webkit-scrollbar-thumb {
+            background-color: var(--border);
+            border-radius: 10px;
         }
         .search-box {
             width: 100%;
@@ -119,19 +178,76 @@ export function generateHTML(entries: DocEntry[], title: string = 'API Documenta
             font-family: inherit;
         }
         nav strong { display: block; margin-bottom: 1rem; font-size: 1.1rem; }
-        nav ul { list-style: none; padding: 0; }
-        nav li { margin-bottom: 0.4rem; }
+        .nav-group { margin-bottom: 1.5rem; }
+        .nav-group-title { 
+            display: block;
+            font-size: 0.75rem; 
+            text-transform: uppercase; 
+            color: var(--primary); 
+            font-weight: 700; 
+            margin-bottom: 0.5rem; 
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.25rem;
+        }
+        .nav-container-list { list-style: none; padding: 0; margin: 0 0 1rem 0; }
+        .nav-container-list li { margin-bottom: 0.2rem; }
         nav a { 
             text-decoration: none; 
             color: var(--text-muted); 
-            font-size: 0.9rem; 
+            font-size: 0.85rem; 
             display: block;
-            padding: 0.3rem 0.5rem;
-            border-radius: 6px;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
             transition: all 0.2s;
         }
         nav a:hover { background: var(--accent); color: var(--primary); }
         main { flex: 1; }
+        .filter-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            gap: 1rem;
+        }
+        .filter-options {
+            display: flex;
+            background: var(--bg);
+            padding: 0.25rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .filter-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        .filter-stats {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 1rem;
+        }
+        .stat-pill {
+            background: var(--bg);
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+        }
         .module-group { margin-bottom: 4rem; }
         .module-name { 
             font-size: 1.8rem; 
@@ -160,13 +276,19 @@ export function generateHTML(entries: DocEntry[], title: string = 'API Documenta
             transition: transform 0.2s;
         }
         .entry:hover { transform: translateY(-2px); }
-        .entry-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .entry-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 1rem; 
+        }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .signature-wrapper { position: relative; margin-bottom: 1.5rem; }
         .signature {
             background: var(--code-bg);
             color: #e2e8f0;
             padding: 1rem;
             border-radius: 8px;
-            margin-bottom: 1.5rem;
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.9rem;
             overflow-x: auto;
@@ -178,6 +300,21 @@ export function generateHTML(entries: DocEntry[], title: string = 'API Documenta
             color: inherit;
             padding: 0;
         }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: var(--accent);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .signature-wrapper:hover .copy-btn { opacity: 1; }
         .type {
             background: var(--accent);
             color: var(--primary);
@@ -209,8 +346,35 @@ export function generateHTML(entries: DocEntry[], title: string = 'API Documenta
         }
         .section { margin-bottom: 1.5rem; padding: 1rem; background: #1e293b; border: 1px solid var(--border); border-radius: 8px; }
         .section strong { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted); }
+        .params-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 0.9rem; 
+            text-align: left; 
+        }
+        .params-table th, .params-table td { 
+            padding: 0.5rem; 
+            border-bottom: 1px solid var(--border); 
+        }
+        .params-table th { color: var(--text-muted); font-weight: 600; }
+        .returns-section { border-left: 4px solid var(--primary); }
+        .returns-content { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+        .returns-desc { color: var(--text-muted); font-size: 0.9rem; }
         .type-small { color: var(--text-muted); font-style: italic; font-size: 0.9rem; }
-        .file-path { font-size: 0.8rem; color: var(--text-muted); margin-top: 1.5rem; text-align: right; border-top: 1px solid var(--border); padding-top: 1rem; }
+        .file-path { 
+            font-size: 0.8rem; 
+            color: var(--text-muted); 
+            margin-top: 1.5rem; 
+            text-align: right; 
+            border-top: 1px solid var(--border); 
+            padding-top: 1rem; 
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .path-icon { font-size: 1rem; }
+        .line-info { opacity: 0.6; }
         code { background: #334155; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #e2e8f0; }
     </style>
 </head>
@@ -220,13 +384,43 @@ export function generateHTML(entries: DocEntry[], title: string = 'API Documenta
         <nav>
             <input type="text" class="search-box" id="search" placeholder="Search API..." oninput="filterDocs()">
             <strong>API Index</strong>
-            <ul>${index}</ul>
+            ${groupedIndexHtml}
         </nav>
         <main>
+            <div class="filter-toolbar">
+                <div class="filter-options">
+                    <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+                    <button class="filter-btn" onclick="setFilter('documented', this)">Documented</button>
+                    <button class="filter-btn" onclick="setFilter('undocumented', this)">Undocumented</button>
+                </div>
+                <div class="filter-stats">
+                    <span class="stat-pill">Total: ${entries.length}</span>
+                    <span class="stat-pill">Docs: ${documentedCount}</span>
+                    <span class="stat-pill">Missing: ${undocumentedCount}</span>
+                </div>
+            </div>
             ${htmlContent}
         </main>
     </div>
     <script>
+        let currentFilter = 'all';
+
+        async function copySignature(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                // Simple feedback could be added here
+            } catch (err) {
+                console.error('Failed to copy', err);
+            }
+        }
+
+        function setFilter(filter, btn) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filterDocs();
+        }
+
         function filterDocs() {
             const query = document.getElementById('search').value.toLowerCase();
             
@@ -239,7 +433,14 @@ export function generateHTML(entries: DocEntry[], title: string = 'API Documenta
             // Filter Main Content
             document.querySelectorAll('.entry').forEach(entry => {
                 const name = entry.getAttribute('data-name');
-                entry.style.display = name.includes(query) ? 'block' : 'none';
+                const isDocumented = entry.getAttribute('data-documented') === 'true';
+                
+                const matchesSearch = name.includes(query);
+                let matchesStatus = true;
+                if (currentFilter === 'documented') matchesStatus = isDocumented;
+                if (currentFilter === 'undocumented') matchesStatus = !isDocumented;
+                
+                entry.style.display = (matchesSearch && matchesStatus) ? 'block' : 'none';
             });
             
             // Hide empty containers

@@ -17,6 +17,11 @@ async function main() {
   const outputDir = path.resolve(args[1]);
   const outputFile = path.join(outputDir, 'index.html');
 
+  // Get project root and name for better path reporting
+  const projectRoot = process.cwd();
+  const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+  const projectName = packageJson.name || 'project';
+
   const parsers: BaseParser[] = [new TSParser(), new RustParser()];
   let allEntries: DocEntry[] = [];
   let allWarnings: string[] = [];
@@ -42,6 +47,11 @@ async function main() {
               allErrors.push(...validation.errors);
             }
             allWarnings.push(...validation.warnings);
+            
+            // Store path relative to project root and prefix with project name
+            const relativePath = path.relative(projectRoot, entry.filePath);
+            entry.filePath = `${projectName}/${relativePath}`;
+            
             allEntries.push(entry);
           }
         }
