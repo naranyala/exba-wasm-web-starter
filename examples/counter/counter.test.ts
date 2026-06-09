@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ReactiveStateProxy } from '../../src/state/proxy';
 
 describe('Counter Example', () => {
@@ -9,13 +9,16 @@ describe('Counter Example', () => {
     `;
   });
 
-  it('should update display on counter increment', () => {
-    const state = new ReactiveStateProxy({ count: 0 }, {
-      onPropertyUpdate: (prop, value) => {
-        const display = document.getElementById('counter-display');
-        if (display) display.innerText = `Count: ${value}`;
-      }
-    });
+  it('should update display on counter increment', async () => {
+    const state = new ReactiveStateProxy(
+      { count: 0 },
+      {
+        onPropertyUpdate: (prop, value) => {
+          const display = document.getElementById('counter-display');
+          if (display) display.innerText = `Count: ${value}`;
+        },
+      },
+    );
 
     const btn = document.getElementById('inc-btn');
     btn?.addEventListener('click', () => {
@@ -23,6 +26,9 @@ describe('Counter Example', () => {
     });
 
     btn?.click();
-    expect(document.getElementById('counter-display')?.innerText).toBe('Count: 1');
+    await new Promise((r) => setTimeout(r, 10));
+    expect(document.getElementById('counter-display')?.innerText).toBe(
+      'Count: 1',
+    );
   });
 });

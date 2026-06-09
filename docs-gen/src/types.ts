@@ -11,7 +11,16 @@ export interface Return {
 
 export interface DocEntry {
   name: string;
-  type: 'function' | 'class' | 'struct' | 'interface' | 'enum' | 'trait' | 'variable' | 'constant' | 'method';
+  type:
+    | 'function'
+    | 'class'
+    | 'struct'
+    | 'interface'
+    | 'enum'
+    | 'trait'
+    | 'variable'
+    | 'constant'
+    | 'method';
   description: string;
   signature?: string;
   params?: Param[];

@@ -48,7 +48,7 @@ export class TemplateCompiler {
     }
 
     const codeParts: string[] = [];
-    let resultVar = '_r';
+    const resultVar = '_r';
 
     codeParts.push(`let ${resultVar}='';`);
 

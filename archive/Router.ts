@@ -62,7 +62,10 @@ export class Router {
       if (match) {
         this.currentPath = route.path;
         if (route.title) document.title = route.title;
-        globalBus.emit('route:change', { path: route.path, params: match.params });
+        globalBus.emit('route:change', {
+          path: route.path,
+          params: match.params,
+        });
 
         if (route.action) {
           route.action();
@@ -76,7 +79,10 @@ export class Router {
     globalBus.emit('route:not-found', { path: stripped });
   }
 
-  private _matchRoute(pattern: string, path: string): { params: Record<string, string> } | null {
+  private _matchRoute(
+    pattern: string,
+    path: string,
+  ): { params: Record<string, string> } | null {
     const patternParts = pattern.split('/').filter(Boolean);
     const pathParts = path.split('/').filter(Boolean);
 

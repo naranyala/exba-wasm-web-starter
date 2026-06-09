@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { TemplateCompiler } from './TemplateCompiler';
 
 describe('TemplateCompiler', () => {
@@ -19,7 +19,7 @@ describe('TemplateCompiler', () => {
   it('should handle undefined values', () => {
     const tpl = 'Value: {{val}}';
     const compiled = compiler.compile(tpl);
-    expect(compiled.render({ })).toBe('Value: ');
+    expect(compiled.render({})).toBe('Value: ');
   });
 
   it('should cache compiled templates', () => {

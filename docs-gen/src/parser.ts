@@ -13,9 +13,9 @@ export interface DocEntry {
 export function parseFile(filePath: string): DocEntry[] {
   const content = fs.readFileSync(filePath, 'utf-8');
   const entries: DocEntry[] = [];
-  
+
   // Regex to match JSDoc comments and the following line
-  const jsdocRegex = /\/\*\*([\s\S]*?)\*\/\s*([^\{]*)/g;
+  const jsdocRegex = /\/\*\*([\s\S]*?)\*\/\s*([^{]*)/g;
   let match;
 
   while ((match = jsdocRegex.exec(content)) !== null) {
@@ -23,8 +23,9 @@ export function parseFile(filePath: string): DocEntry[] {
     const declaration = match[2].trim();
 
     // Basic extraction of name and type
-    const nameMatch = declaration.match(/(?:function|class|const|let|var)\s+([a-zA-Z0-9_]+)/) || 
-                      declaration.match(/([a-zA-Z0-9_]+)\s*\(/);
+    const nameMatch =
+      declaration.match(/(?:function|class|const|let|var)\s+([a-zA-Z0-9_]+)/) ||
+      declaration.match(/([a-zA-Z0-9_]+)\s*\(/);
     if (!nameMatch) continue;
 
     const name = nameMatch[1];
@@ -33,7 +34,6 @@ export function parseFile(filePath: string): DocEntry[] {
     else if (declaration.includes('class')) type = 'class';
     else if (declaration.includes('interface')) type = 'interface';
     else if (declaration.match(/([a-zA-Z0-9_]+)\s*\(/)) type = 'function'; // Method
-
 
     const description = parseDescription(comment);
     const params = parseParams(comment);
@@ -45,7 +45,7 @@ export function parseFile(filePath: string): DocEntry[] {
       description,
       params,
       returns,
-      filePath
+      filePath,
     });
   }
 
@@ -55,8 +55,8 @@ export function parseFile(filePath: string): DocEntry[] {
 function parseDescription(comment: string): string {
   return comment
     .split('\n')
-    .map(line => line.trim().replace(/^\*\s?/, ''))
-    .filter(line => line && !line.startsWith('@'))
+    .map((line) => line.trim().replace(/^\*\s?/, ''))
+    .filter((line) => line && !line.startsWith('@'))
     .join(' ')
     .trim();
 }
@@ -64,7 +64,7 @@ function parseDescription(comment: string): string {
 function parseParams(comment: string): DocEntry['params'] | undefined {
   const params: DocEntry['params'] = [];
   const lines = comment.split('\n');
-  
+
   for (const line of lines) {
     const trimmed = line.trim().replace(/^\*\s?/, '');
     if (trimmed.startsWith('@param')) {
@@ -74,7 +74,7 @@ function parseParams(comment: string): DocEntry['params'] | undefined {
         params.push({
           type: match[1],
           name: match[2],
-          description: match[3].trim()
+          description: match[3].trim(),
         });
       } else {
         // Try to match @param name description
@@ -83,13 +83,13 @@ function parseParams(comment: string): DocEntry['params'] | undefined {
           params.push({
             type: 'any',
             name: simpleMatch[1],
-            description: simpleMatch[2].trim()
+            description: simpleMatch[2].trim(),
           });
         }
       }
     }
   }
-  
+
   return params.length > 0 ? params : undefined;
 }
 
@@ -102,14 +102,14 @@ function parseReturns(comment: string): DocEntry['returns'] | undefined {
       if (match) {
         return {
           type: match[1],
-          description: match[2].trim()
+          description: match[2].trim(),
         };
       } else {
         const simpleMatch = trimmed.match(/@returns\s*(.*)/);
         if (simpleMatch) {
           return {
             type: 'any',
-            description: simpleMatch[1].trim()
+            description: simpleMatch[1].trim(),
           };
         }
       }

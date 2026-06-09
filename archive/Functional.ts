@@ -2,7 +2,7 @@ export type Mapper<T, U> = (input: T) => U;
 
 /**
  * Performs left-to-right function composition.
- * The first function can take any number of arguments, 
+ * The first function can take any number of arguments,
  * and the result of each function is passed to the next.
  */
 export function pipe<T>(value: T, ...fns: Mapper<any, any>[]): any {
@@ -13,7 +13,8 @@ export function pipe<T>(value: T, ...fns: Mapper<any, any>[]): any {
  * Performs right-to-left function composition.
  */
 export function compose<T>(...fns: Mapper<any, any>[]): Mapper<any, T> {
-  return (initialValue: any) => fns.reduceRight((acc, fn) => fn(acc), initialValue);
+  return (initialValue: any) =>
+    fns.reduceRight((acc, fn) => fn(acc), initialValue);
 }
 
 /**
@@ -34,6 +35,6 @@ export function curry<T extends any[], R>(fn: (...args: T) => R): any {
 export function lens<T, K extends keyof T>(key: K) {
   return {
     get: (obj: T) => obj[key],
-    set: (val: T[K], obj: T) => ({ ...obj, [key]: val })
+    set: (val: T[K], obj: T) => ({ ...obj, [key]: val }),
   };
 }

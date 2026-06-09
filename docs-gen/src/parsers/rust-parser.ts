@@ -1,6 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { BaseParser, ParserResult, DocEntry, Param, Return } from '../types';
+import {
+  BaseParser,
+  type DocEntry,
+  type Param,
+  type ParserResult,
+  Return,
+} from '../types';
 
 export class RustParser extends BaseParser {
   supportedExtensions = ['.rs'];
@@ -10,17 +16,18 @@ export class RustParser extends BaseParser {
     const entries: DocEntry[] = [];
     const warnings: string[] = [];
     const moduleName = path.basename(filePath);
-    
+
     const lines = content.split('\n');
     let i = 0;
-    let currentContainer: string | undefined = undefined;
+    let currentContainer: string | undefined;
 
     while (i < lines.length) {
       const line = lines[i].trim();
 
       if (line.startsWith('impl ')) {
-        const implMatch = line.match(/impl\s+([a-zA-Z0-9_<>]+)\s+for\s+([a-zA-Z0-9_<>]+)/) || 
-                          line.match(/impl\s+([a-zA-Z0-9_<>]+)/);
+        const implMatch =
+          line.match(/impl\s+([a-zA-Z0-9_<>]+)\s+for\s+([a-zA-Z0-9_<>]+)/) ||
+          line.match(/impl\s+([a-zA-Z0-9_<>]+)/);
         if (implMatch) {
           currentContainer = implMatch[1] || implMatch[2];
         }
@@ -41,25 +48,34 @@ export class RustParser extends BaseParser {
         }
 
         // 2. Handle attributes
-        let declarationLine = line;
+        const declarationLine = line;
         // If the line was actually an attribute but the next line is the pub decl
         // We need to be careful. Usually pub is on the same line as fn/struct
         // but it could be #[something] \n pub fn...
-        
+
         // Capture multi-line signature
         let signature = declarationLine;
         let k = i + 1;
-        while (k < lines.length && !lines[k].trim().startsWith('{') && !lines[k].trim().startsWith(';')) {
+        while (
+          k < lines.length &&
+          !lines[k].trim().startsWith('{') &&
+          !lines[k].trim().startsWith(';')
+        ) {
           signature += ' ' + lines[k].trim();
           k++;
         }
 
-        const entry = this.parseDeclaration(signature, docLines, filePath, i + 1);
+        const entry = this.parseDeclaration(
+          signature,
+          docLines,
+          filePath,
+          i + 1,
+        );
         if (entry) {
           entries.push({
             ...entry,
             container: currentContainer,
-            module: moduleName
+            module: moduleName,
           });
         }
       }
@@ -69,13 +85,18 @@ export class RustParser extends BaseParser {
     return { entries, warnings };
   }
 
-  private parseDeclaration(declaration: string, docLines: string[], filePath: string, line: number): DocEntry | null {
+  private parseDeclaration(
+    declaration: string,
+    docLines: string[],
+    filePath: string,
+    line: number,
+  ): DocEntry | null {
     const description = docLines.join(' ').trim();
-    
+
     let type: DocEntry['type'] = 'variable';
     let name = '';
     let params: Param[] = [];
-    let returns = undefined;
+    let returns;
 
     if (declaration.includes('fn ')) {
       type = 'function';
@@ -84,9 +105,12 @@ export class RustParser extends BaseParser {
         name = nameMatch[1];
         const paramsMatch = declaration.match(/\((.*?)\)/);
         const paramsText = paramsMatch ? paramsMatch[1] : '';
-        const signatureParams = this.splitParameters(paramsText).map(p => {
+        const signatureParams = this.splitParameters(paramsText).map((p) => {
           const parts = p.trim().split(':');
-          return { name: parts[0]?.trim() || 'unknown', type: parts[1]?.trim() || 'unknown' };
+          return {
+            name: parts[0]?.trim() || 'unknown',
+            type: parts[1]?.trim() || 'unknown',
+          };
         });
 
         const paramDescriptions: Record<string, string> = {};
@@ -105,14 +129,19 @@ export class RustParser extends BaseParser {
           }
         }
 
-        params = signatureParams.map(p => ({
+        params = signatureParams.map((p) => ({
           ...p,
-          description: paramDescriptions[p.name] || 'See function description'
+          description: paramDescriptions[p.name] || 'See function description',
         }));
 
-        const returnMatch = declaration.match(/->\s*([a-zA-Z0-9_<>\[\]\s]+)(?=[^{;]*$)/);
+        const returnMatch = declaration.match(
+          /->\s*([a-zA-Z0-9_<>[\]\s]+)(?=[^{;]*$)/,
+        );
         if (returnMatch) {
-          returns = { type: returnMatch[1].trim(), description: 'Return value' };
+          returns = {
+            type: returnMatch[1].trim(),
+            description: 'Return value',
+          };
         }
       }
     } else if (declaration.includes('struct ')) {
@@ -144,7 +173,7 @@ export class RustParser extends BaseParser {
       returns,
       filePath,
       lineNumber: line,
-      isPublic: true
+      isPublic: true,
     };
   }
 

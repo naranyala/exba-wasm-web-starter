@@ -1,6 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { BaseParser, ParserResult, DocEntry, Param, Return } from '../types';
+import {
+  BaseParser,
+  type DocEntry,
+  type Param,
+  type ParserResult,
+  type Return,
+} from '../types';
 
 export class TSParser extends BaseParser {
   supportedExtensions = ['.ts', '.js', '.tsx', '.jsx'];
@@ -10,14 +16,18 @@ export class TSParser extends BaseParser {
     const entries: DocEntry[] = [];
     const warnings: string[] = [];
     const moduleName = path.basename(filePath);
-    
+
     const lines = content.split('\n');
-    let currentContainer: string | undefined = undefined;
+    let currentContainer: string | undefined;
 
     // Pre-scan for class boundaries to handle context
-    const classPositions: { name: string, startLine: number, endLine: number }[] = [];
+    const classPositions: {
+      name: string;
+      startLine: number;
+      endLine: number;
+    }[] = [];
     const classRegex = /class\s+([a-zA-Z0-9_]+)/;
-    
+
     lines.forEach((line, idx) => {
       const match = line.match(classRegex);
       if (match) {
@@ -40,16 +50,20 @@ export class TSParser extends BaseParser {
       const trimmed = line.trim();
 
       // Identify potential declarations
-      const nameMatch = trimmed.match(/(?:export\s+)?(?:function|class|const|let|var|interface|enum|type)\s+([a-zA-Z0-9_]+)/) || 
-                        trimmed.match(/(?:export\s+)?([a-zA-Z0-9_]+)\s*\(/);
-      
+      const nameMatch =
+        trimmed.match(
+          /(?:export\s+)?(?:function|class|const|let|var|interface|enum|type)\s+([a-zA-Z0-9_]+)/,
+        ) || trimmed.match(/(?:export\s+)?([a-zA-Z0-9_]+)\s*\(/);
+
       if (!nameMatch) continue;
 
       const name = nameMatch[1];
-      
+
       // Only expose if it's exported or we are inside a class (method)
       const isExported = trimmed.startsWith('export');
-      const container = classPositions.find(cp => i >= cp.startLine && i <= cp.endLine);
+      const container = classPositions.find(
+        (cp) => i >= cp.startLine && i <= cp.endLine,
+      );
       currentContainer = container?.name;
 
       if (!isExported && !currentContainer) continue;
@@ -74,13 +88,16 @@ export class TSParser extends BaseParser {
       if (j >= 0 && lines[j].trim().endsWith('*/')) {
         comment = lines[j] + '\n' + comment;
         j--;
-        while (j >= 0 && (lines[j].trim().startsWith('*') || lines[j].trim().startsWith('/**'))) {
-            if (lines[j].trim().startsWith('/**')) {
-                comment = lines[j] + '\n' + comment;
-                break;
-            }
+        while (
+          j >= 0 &&
+          (lines[j].trim().startsWith('*') || lines[j].trim().startsWith('/**'))
+        ) {
+          if (lines[j].trim().startsWith('/**')) {
             comment = lines[j] + '\n' + comment;
-            j--;
+            break;
+          }
+          comment = lines[j] + '\n' + comment;
+          j--;
         }
       }
 
@@ -99,7 +116,7 @@ export class TSParser extends BaseParser {
         lineNumber: i + 1,
         isPublic: isExported || !!currentContainer,
         container: currentContainer,
-        module: moduleName
+        module: moduleName,
       });
     }
 
@@ -110,8 +127,8 @@ export class TSParser extends BaseParser {
     if (!comment) return '';
     return comment
       .split('\n')
-      .map(line => line.trim().replace(/^\*\s?/, ''))
-      .filter(line => line && !line.startsWith('@'))
+      .map((line) => line.trim().replace(/^\*\s?/, ''))
+      .filter((line) => line && !line.startsWith('@'))
       .join(' ')
       .trim();
   }
@@ -123,13 +140,23 @@ export class TSParser extends BaseParser {
     for (const line of lines) {
       const trimmed = line.trim().replace(/^\*\s?/, '');
       if (trimmed.startsWith('@param')) {
-        const match = trimmed.match(/@param\s+{(.*?)}\s+([a-zA-Z0-9_]+)\s*(.*)/);
+        const match = trimmed.match(
+          /@param\s+{(.*?)}\s+([a-zA-Z0-9_]+)\s*(.*)/,
+        );
         if (match) {
-          params.push({ type: match[1], name: match[2], description: match[3].trim() });
+          params.push({
+            type: match[1],
+            name: match[2],
+            description: match[3].trim(),
+          });
         } else {
           const simpleMatch = trimmed.match(/@param\s+([a-zA-Z0-9_]+)\s*(.*)/);
           if (simpleMatch) {
-            params.push({ type: 'any', name: simpleMatch[1], description: simpleMatch[2].trim() });
+            params.push({
+              type: 'any',
+              name: simpleMatch[1],
+              description: simpleMatch[2].trim(),
+            });
           }
         }
       }

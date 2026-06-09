@@ -1,4 +1,4 @@
-import { DocEntry } from './types';
+import type { DocEntry } from './types';
 
 function formatDescription(text: string): string {
   return text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
@@ -7,18 +7,23 @@ function formatDescription(text: string): string {
   });
 }
 
-export function generateHTML(entries: DocEntry[], title: string = 'API Documentation'): string {
+export function generateHTML(
+  entries: DocEntry[],
+  title: string = 'API Documentation',
+): string {
   // Group by Module -> Container
   const groups: Record<string, Record<string, DocEntry[]>> = {};
 
-  entries.forEach(entry => {
+  entries.forEach((entry) => {
     if (!groups[entry.module]) groups[entry.module] = {};
     const container = entry.container || 'Global';
     if (!groups[entry.module][container]) groups[entry.module][container] = [];
     groups[entry.module][container].push(entry);
   });
 
-  const documentedCount = entries.filter(e => e.description !== '(No description provided)').length;
+  const documentedCount = entries.filter(
+    (e) => e.description !== '(No description provided)',
+  ).length;
   const undocumentedCount = entries.length - documentedCount;
 
   // Generate grouped index for sidebar
@@ -29,7 +34,7 @@ export function generateHTML(entries: DocEntry[], title: string = 'API Documenta
     for (const [container, members] of Object.entries(containers)) {
       groupedIndexHtml += `
         <ul class="nav-container-list">
-          ${members.map(m => `<li data-name="${m.name.toLowerCase()}"><a href="#${m.name}">${m.name}</a></li>`).join('')}
+          ${members.map((m) => `<li data-name="${m.name.toLowerCase()}"><a href="#${m.name}">${m.name}</a></li>`).join('')}
         </ul>`;
     }
     groupedIndexHtml += `</div>`;
@@ -39,12 +44,14 @@ export function generateHTML(entries: DocEntry[], title: string = 'API Documenta
   for (const [module, containers] of Object.entries(groups)) {
     htmlContent += `<section class="module-group">
       <h2 class="module-name">${module}</h2>`;
-    
+
     for (const [container, members] of Object.entries(containers)) {
       htmlContent += `
         <div class="container-group">
           <h3 class="container-name">${container}</h3>
-          ${members.map(entry => `
+          ${members
+            .map(
+              (entry) => `
             <div class="entry" 
                  id="${entry.name}" 
                  data-name="${entry.name.toLowerCase()}" 
@@ -58,15 +65,21 @@ export function generateHTML(entries: DocEntry[], title: string = 'API Documenta
                   ${entry.isPublic ? '<span class="badge pub">public</span>' : ''}
                 </div>
               </div>
-              ${entry.signature ? `
+              ${
+                entry.signature
+                  ? `
                 <div class="signature-wrapper">
                   <div class="signature"><code>${entry.signature}</code></div>
                   <button class="copy-btn" onclick="copySignature('${entry.signature.replace(/'/g, "\\'")}')">
                     Copy
                   </button>
-                </div>` : ''}
+                </div>`
+                  : ''
+              }
               <div class="description">${formatDescription(entry.description)}</div>
-              ${entry.params ? `
+              ${
+                entry.params
+                  ? `
                 <div class="section">
                   <strong>Parameters</strong>
                   <table class="params-table">
@@ -78,18 +91,26 @@ export function generateHTML(entries: DocEntry[], title: string = 'API Documenta
                       </tr>
                     </thead>
                     <tbody>
-                      ${entry.params.map(p => `
+                      ${entry.params
+                        .map(
+                          (p) => `
                         <tr>
                           <td><code>${p.name}</code></td>
                           <td><span class="type-small">${p.type}</span></td>
                           <td>${p.description}</td>
                         </tr>
-                      `).join('')}
+                      `,
+                        )
+                        .join('')}
                     </tbody>
                   </table>
                 </div>
-              ` : ''}
-              ${entry.returns ? `
+              `
+                  : ''
+              }
+              ${
+                entry.returns
+                  ? `
                 <div class="section returns-section">
                   <strong>Returns</strong>
                   <div class="returns-content">
@@ -97,12 +118,16 @@ export function generateHTML(entries: DocEntry[], title: string = 'API Documenta
                     <span class="returns-desc">${entry.returns.description}</span>
                   </div>
                 </div>
-              ` : ''}
+              `
+                  : ''
+              }
               <div class="file-path">
                 <span class="path-icon">📁</span> ${entry.filePath} <span class="line-info">(Line ${entry.lineNumber})</span>
               </div>
             </div>
-          `).join('')}
+          `,
+            )
+            .join('')}
         </div>
       `;
     }

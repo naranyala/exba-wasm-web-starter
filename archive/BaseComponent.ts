@@ -10,7 +10,7 @@ export abstract class BaseComponent extends HTMLElement {
   }
 
   /**
-   * Initialize component state. 
+   * Initialize component state.
    * The provided state object will be made reactive.
    */
   protected setState(initialState: object) {

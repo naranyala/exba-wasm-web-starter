@@ -6,6 +6,7 @@ use crate::ir::*;
 #[derive(Error, Debug)]
 pub enum IRError {
     /// The requested action identifier was not found in the registry.
+    #[error("Unknown action: {0}")]
     UnknownAction(String),
 }
 
