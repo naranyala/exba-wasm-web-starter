@@ -3,71 +3,6 @@ import { html } from '../../framework/core/dom';
 import { EXBA } from '../../framework/core/exba';
 import { t } from '../../styles';
 
-const STYLES = `
-  .container {
-    padding: 2rem;
-    color: ${t.zinc100};
-    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 400px;
-  }
-  .neofetch-card {
-    background: ${t.zinc900a};
-    border: 1px solid ${t.zinc800a};
-    border-radius: 1rem;
-    padding: 2rem;
-    display: flex;
-    gap: 2rem;
-    max-width: 800px;
-    width: 100%;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  }
-  .ascii-art {
-    color: ${t.indigo400};
-    font-size: 0.75rem;
-    line-height: 1.2;
-    white-space: pre;
-  }
-  .info-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  .info-item {
-    font-size: 0.9375rem;
-  }
-  .label {
-    color: ${t.indigo300};
-    font-weight: 700;
-    margin-right: 0.5rem;
-  }
-  .value {
-    color: ${t.zinc300};
-  }
-  .divider {
-    color: ${t.zinc500};
-    margin: 0.25rem 0;
-  }
-  .user-host {
-    font-size: 1.125rem;
-    font-weight: 700;
-    margin-bottom: 0.25rem;
-  }
-  .user { color: ${t.indigo400}; }
-  .host { color: ${t.indigo300}; }
-  .color-blocks {
-    display: flex;
-    gap: 0.25rem;
-    margin-top: 1rem;
-  }
-  .block {
-    width: 1.25rem;
-    height: 1.25rem;
-  }
-`;
-
 const ASCII_LOGO = `
        .---.
       /     \\
@@ -81,7 +16,7 @@ export class NeofetchComponent extends ExbaComponent {
   static useShadow = true;
   static styles = {
     container:
-      'padding: 2rem; color: ${t.zinc100}; font-family: "SF Mono", "Fira Code", monospace; display: flex; justify-content: center; align-items: center; min-height: 400px;',
+      `padding: 2rem; color: ${t.zinc100}; font-family: "SF Mono", "Fira Code", monospace; display: flex; justify-content: center; align-items: center; min-height: 400px;`,
     card: `background: ${t.zinc900a}; border: 1px solid ${t.zinc800a}; border-radius: 1rem; padding: 2rem; display: flex; gap: 2rem; max-width: 800px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);`,
     ascii: `color: ${t.indigo400}; font-size: 0.75rem; line-height: 1.2; white-space: pre;`,
     infoList: 'display: flex; flex-direction: column; gap: 0.5rem;',

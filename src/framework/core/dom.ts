@@ -110,8 +110,10 @@ function syncNodes(parent: HTMLElement | ShadowRoot, newNodes: Node[]) {
     // 5. Handle element nodes
     if (oldNode instanceof HTMLElement && newNode instanceof HTMLElement) {
       updateAttributes(oldNode, newNode);
-      // Recursively sync children instead of re-parsing innerHTML
-      syncNodes(oldNode, Array.from(newNode.childNodes));
+      // Recursively sync children instead of re-parsing innerHTML unless marked as persistent
+      if (!oldNode.hasAttribute('data-persist')) {
+        syncNodes(oldNode, Array.from(newNode.childNodes));
+      }
     }
   }
 }

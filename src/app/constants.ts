@@ -173,6 +173,40 @@ export const MENU_CATEGORIES = [
           if (container) container.innerHTML = '<exba-drawer></exba-drawer>';
         },
       },
+      {
+        id: 'datepicker',
+        label: 'Date Picker',
+        icon: '📅',
+        code: `// Date Picker`,
+        action: () => {
+          const container = document.getElementById('view-container');
+          if (container)
+            container.innerHTML = '<exba-datepicker></exba-datepicker>';
+        },
+      },
+      {
+        id: 'cytoscape-mindmap',
+        label: 'Mindmap (Cytoscape)',
+        icon: '🕸️',
+        code: `// Cytoscape Mindmap`,
+        action: () => {
+          const container = document.getElementById('view-container');
+          if (container)
+            container.innerHTML =
+              '<exba-cytoscape-mindmap></exba-cytoscape-mindmap>';
+        },
+      },
+      {
+        id: 'vis-mindmap',
+        label: 'Mindmap (Vis-Network)',
+        icon: '🧬',
+        code: `// Vis-Network Mindmap`,
+        action: () => {
+          const container = document.getElementById('view-container');
+          if (container)
+            container.innerHTML = '<exba-vis-mindmap></exba-vis-mindmap>';
+        },
+      },
     ],
   },
   {

@@ -18,7 +18,7 @@ export class ActivityFeedComponent extends ExbaComponent {
     msg: `font-size: 0.9375rem; color: ${t.zinc200}; margin-bottom: 0.25rem;`,
     time: `font-size: 0.75rem; color: ${t.zinc500};`,
     empty:
-      'text-align: center; color: ${t.zinc600}; padding: 3rem; border: 2px dashed ${t.zinc800a}; border-radius: 1rem;',
+      `text-align: center; color: ${t.zinc600}; padding: 3rem; border: 2px dashed ${t.zinc800a}; border-radius: 1rem;`,
   };
 
   protected onMount() {

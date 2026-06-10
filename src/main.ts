@@ -7,6 +7,9 @@ import './components/examples/analytics';
 import './components/examples/terminal';
 import './components/examples/neofetch';
 import './components/examples/kanban';
+import './components/examples/datepicker';
+import './components/examples/cytoscape-mindmap';
+import './components/examples/vis-mindmap';
 import './components/examples/activity-feed';
 import './components/examples/accordion';
 import './components/examples/drawer';
@@ -195,6 +198,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     router.register({ path: '/terminal', component: 'exba-terminal' });
     router.register({ path: '/neofetch', component: 'exba-neofetch' });
     router.register({ path: '/kanban', component: 'exba-kanban' });
+    router.register({ path: '/datepicker', component: 'exba-datepicker' });
+    router.register({
+      path: '/cytoscape-mindmap',
+      component: 'exba-cytoscape-mindmap',
+    });
+    router.register({ path: '/vis-mindmap', component: 'exba-vis-mindmap' });
     router.register({ path: '/activity', component: 'exba-activity-feed' });
     router.register({ path: '/accordion', component: 'exba-accordion' });
     router.register({ path: '/drawer', component: 'exba-drawer' });

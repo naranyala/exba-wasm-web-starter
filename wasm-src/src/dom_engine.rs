@@ -24,8 +24,8 @@ pub enum DomInstruction {
     ReplaceChild { parent_id: String, old_id: String, new_id: String },
 }
 
-pub fn diff(old_tree: &DomNode, new_tree: &DomNode) -> Vec<DomInstruction> {
-    let mut instructions = Vec::new();
+pub fn diff(_old_tree: &DomNode, _new_tree: &DomNode) -> Vec<DomInstruction> {
+    let instructions = Vec::new();
     // Implementation of a high-performance tree diffing algorithm
     // This will generate surgical instructions for the TS bridge to execute.
     instructions

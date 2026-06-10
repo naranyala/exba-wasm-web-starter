@@ -41,7 +41,7 @@ export abstract class ExbaComponent extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return Object.keys(ExbaComponent.props || {});
+    return Object.keys(this.props || {});
   }
 
   attributeChangedCallback(

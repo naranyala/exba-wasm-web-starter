@@ -21,7 +21,8 @@ export class KanbanComponent extends ExbaComponent {
     title:
       'font-size: 1.75rem; font-weight: 800; color: ${t.zinc100}; letter-spacing: -0.02em;',
     board: 'display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;',
-    column: `background: ${t.zinc900a}; border: 1px solid ${t.zinc800a}; border-radius: 1.25rem; padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem; backdrop-filter: blur(8px);`,
+    column: `background: ${t.zinc900a}; border: 1px solid ${t.zinc800a}; border-radius: 1.25rem; padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem; backdrop-filter: blur(8px); transition: all ${ease};`,
+    columnDragOver: `border-color: ${t.indigo500} !important; background: rgba(99, 102, 241, 0.08) !important;`,
     colHeader:
       'display: flex; align-items: center; justify-content: space-between; padding: 0 0.25rem;',
     colTitle: `font-size: 0.75rem; font-weight: 800; color: ${t.zinc500}; text-transform: uppercase; letter-spacing: 0.1em;`,
@@ -57,12 +58,48 @@ export class KanbanComponent extends ExbaComponent {
       }
     }
     const defaultTasks: KanbanTask[] = [
-      { id: "1", title: "WASM Performance Benchmarking", col: "todo", priority: "High", tags: ["core", "bench"] },
-      { id: "2", title: "Refactor Component Bridge", col: "todo", priority: "Medium", tags: ["refactor"] },
-      { id: "3", title: "Implement Glassmorphism UI", col: "in-progress", priority: "Low", tags: ["ui"] },
-      { id: "4", title: "Initial Project Layout", col: "done", priority: "High", tags: ["setup"] },
-      { id: "5", title: "Write Documentation", col: "todo", priority: "Medium", tags: ["docs"] },
-      { id: "6", title: "Setup CI/CD Pipeline", col: "in-progress", priority: "High", tags: ["devops"] },
+      {
+        id: '1',
+        title: 'WASM Performance Benchmarking',
+        col: 'todo',
+        priority: 'High',
+        tags: ['core', 'bench'],
+      },
+      {
+        id: '2',
+        title: 'Refactor Component Bridge',
+        col: 'todo',
+        priority: 'Medium',
+        tags: ['refactor'],
+      },
+      {
+        id: '3',
+        title: 'Implement Glassmorphism UI',
+        col: 'in-progress',
+        priority: 'Low',
+        tags: ['ui'],
+      },
+      {
+        id: '4',
+        title: 'Initial Project Layout',
+        col: 'done',
+        priority: 'High',
+        tags: ['setup'],
+      },
+      {
+        id: '5',
+        title: 'Write Documentation',
+        col: 'todo',
+        priority: 'Medium',
+        tags: ['docs'],
+      },
+      {
+        id: '6',
+        title: 'Setup CI/CD Pipeline',
+        col: 'in-progress',
+        priority: 'High',
+        tags: ['devops'],
+      },
     ];
     localStorage.setItem('exba_kanban_tasks', JSON.stringify(defaultTasks));
     return defaultTasks;
@@ -81,19 +118,95 @@ export class KanbanComponent extends ExbaComponent {
     this.setState({ tasks });
   }
 
-  private async moveTask(id: string) {
+  private async editTask(id: string) {
     const tasks = this.getLocalTasks();
     const task = tasks.find((t) => t.id === id);
-    if (task) {
-      const sequence = ["todo", "in-progress", "done", "todo"];
-      const pos = sequence.indexOf(task.col);
-      if (pos !== -1) {
-        task.col = sequence[pos + 1];
+    if (!task) return;
+
+    const newTitle = prompt('Edit task title:', task.title);
+    if (newTitle === null) return;
+    if (!newTitle.trim()) return;
+
+    const newPriority =
+      prompt('Edit priority (High, Medium, Low):', task.priority) || 'Medium';
+    const newTagsStr = prompt(
+      'Edit tags (comma separated):',
+      task.tags.join(', '),
+    );
+    const newTags =
+      newTagsStr !== null
+        ? newTagsStr
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : task.tags;
+
+    task.title = newTitle.trim();
+    task.priority = newPriority;
+    task.tags = newTags;
+
+    this.saveLocalTasks(tasks);
+
+    EXBA.notify('activity', {
+      id: Math.random().toString(36).substring(2, 11),
+      icon: '📝',
+      msg: `Task "${task.title}" updated`,
+      time: new Date().toLocaleTimeString(),
+    });
+
+    this.setState({ tasks });
+  }
+
+  private dragStart(e: DragEvent, id: string) {
+    if (e.dataTransfer) {
+      e.dataTransfer.setData('text/plain', id);
+      e.dataTransfer.effectAllowed = 'move';
+    }
+  }
+
+  private dragOver(e: DragEvent) {
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+  private dragEnter(e: DragEvent, colId: string) {
+    e.preventDefault();
+    const root = this.shadowRoot || this;
+    const colEl = root.getElementById(`col-${colId}`);
+    if (colEl) {
+      colEl.classList.add('columnDragOver');
+    }
+  }
+
+  private dragLeave(e: DragEvent, colId: string) {
+    const root = this.shadowRoot || this;
+    const colEl = root.getElementById(`col-${colId}`);
+    if (colEl) {
+      colEl.classList.remove('columnDragOver');
+    }
+  }
+
+  private drop(e: DragEvent, colId: string) {
+    e.preventDefault();
+    const root = this.shadowRoot || this;
+    const colEl = root.getElementById(`col-${colId}`);
+    if (colEl) {
+      colEl.classList.remove('columnDragOver');
+    }
+    const id = e.dataTransfer?.getData('text/plain');
+    if (id) {
+      const tasks = this.getLocalTasks();
+      const task = tasks.find((t) => t.id === id);
+      if (task && task.col !== colId) {
+        const oldCol = task.col;
+        task.col = colId;
         this.saveLocalTasks(tasks);
         EXBA.notify('activity', {
           id: Math.random().toString(36).substring(2, 11),
           icon: '📋',
-          msg: `Task "${task.title}" moved to ${task.col.toUpperCase()}`,
+          msg: `Task "${task.title}" moved to ${colId.toUpperCase()}`,
           time: new Date().toLocaleTimeString(),
         });
         this.setState({ tasks });
@@ -101,7 +214,7 @@ export class KanbanComponent extends ExbaComponent {
     }
   }
 
-  private async addTask() {
+  private async addTask(colId: string = 'todo') {
     const title = prompt('Enter task title:');
     if (!title) return;
     const priority = prompt('Enter priority (High, Medium, Low):') || 'Medium';
@@ -112,11 +225,13 @@ export class KanbanComponent extends ExbaComponent {
         .filter(Boolean) || [];
 
     const tasks = this.getLocalTasks();
-    const nextId = (Math.max(0, ...tasks.map((t) => Number.parseInt(t.id) || 0)) + 1).toString();
+    const nextId = (
+      Math.max(0, ...tasks.map((t) => Number.parseInt(t.id) || 0)) + 1
+    ).toString();
     const newTask: KanbanTask = {
       id: nextId,
       title,
-      col: 'todo',
+      col: colId,
       priority,
       tags,
     };
@@ -126,7 +241,7 @@ export class KanbanComponent extends ExbaComponent {
     EXBA.notify('activity', {
       id: Math.random().toString(36).substring(2, 11),
       icon: '➕',
-      msg: `Task "${title}" created`,
+      msg: `Task "${title}" created in ${colId.toUpperCase()}`,
       time: new Date().toLocaleTimeString(),
     });
 
@@ -171,7 +286,7 @@ export class KanbanComponent extends ExbaComponent {
             .map((col) => {
               const colTasks = tasks.filter((t) => t.col === col.id);
               return `
-              <div class="column">
+              <div class="column" id="col-${col.id}" ondragover="window.dispatchKanbanDragOver(event)" ondragenter="window.dispatchKanbanDragEnter(event, '${col.id}')" ondragleave="window.dispatchKanbanDragLeave(event, '${col.id}')" ondrop="window.dispatchKanbanDrop(event, '${col.id}')">
                 <div class="colHeader">
                   <div class="colTitle">${col.title}</div>
                   <div class="colCount">${colTasks.length}</div>
@@ -182,7 +297,7 @@ export class KanbanComponent extends ExbaComponent {
                       ? colTasks
                           .map(
                             (t) => `
-                      <div class="task taskActive" onclick="window.dispatchKanbanMove('${t.id}')">
+                      <div class="task taskActive" draggable="true" ondragstart="window.dispatchKanbanDragStart(event, '${t.id}')" onclick="window.dispatchKanbanEdit('${t.id}')">
                         <div style="position: absolute; top: 0.5rem; right: 0.5rem; cursor: pointer; color: ${t.zinc600};" onclick="event.stopPropagation(); window.dispatchKanbanDelete('${t.id}')">X</div>
                         <div class="taskTitle">${t.title}</div>
                         <div class="tagRow">
@@ -204,7 +319,7 @@ export class KanbanComponent extends ExbaComponent {
                     `
                   }
                 </div>
-                <button class="btn btnHover" onclick="window.dispatchKanbanAdd()">
+                <button class="btn btnHover" onclick="window.dispatchKanbanAdd('${col.id}')">
                   <span>+</span> New Task
                 </button>
               </div>
@@ -218,9 +333,18 @@ export class KanbanComponent extends ExbaComponent {
 
   connectedCallback() {
     super.connectedCallback();
-    (window as any).dispatchKanbanMove = (id: string) => this.moveTask(id);
-    (window as any).dispatchKanbanAdd = () => this.addTask();
+    (window as any).dispatchKanbanEdit = (id: string) => this.editTask(id);
+    (window as any).dispatchKanbanAdd = (colId?: string) => this.addTask(colId);
     (window as any).dispatchKanbanDelete = (id: string) => this.deleteTask(id);
+    (window as any).dispatchKanbanDragStart = (e: DragEvent, id: string) =>
+      this.dragStart(e, id);
+    (window as any).dispatchKanbanDragOver = (e: DragEvent) => this.dragOver(e);
+    (window as any).dispatchKanbanDragEnter = (e: DragEvent, colId: string) =>
+      this.dragEnter(e, colId);
+    (window as any).dispatchKanbanDragLeave = (e: DragEvent, colId: string) =>
+      this.dragLeave(e, colId);
+    (window as any).dispatchKanbanDrop = (e: DragEvent, colId: string) =>
+      this.drop(e, colId);
   }
 }
 
