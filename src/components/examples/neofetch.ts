@@ -15,8 +15,7 @@ const ASCII_LOGO = `
 export class NeofetchComponent extends ExbaComponent {
   static useShadow = true;
   static styles = {
-    container:
-      `padding: 2rem; color: ${t.zinc100}; font-family: "SF Mono", "Fira Code", monospace; display: flex; justify-content: center; align-items: center; min-height: 400px;`,
+    container: `padding: 2rem; color: ${t.zinc100}; font-family: "SF Mono", "Fira Code", monospace; display: flex; justify-content: center; align-items: center; min-height: 400px;`,
     card: `background: ${t.zinc900a}; border: 1px solid ${t.zinc800a}; border-radius: 1rem; padding: 2rem; display: flex; gap: 2rem; max-width: 800px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);`,
     ascii: `color: ${t.indigo400}; font-size: 0.75rem; line-height: 1.2; white-space: pre;`,
     infoList: 'display: flex; flex-direction: column; gap: 0.5rem;',

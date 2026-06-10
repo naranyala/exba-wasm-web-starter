@@ -1,70 +1,85 @@
 # EXBA Framework
 
-EXBA is a high-performance, **WASM-First** web framework that bridges Rust-powered business logic with a modern, reactive TypeScript frontend. It is designed for applications that require complex state transitions, heavy computation, and ultra-fast UI updates.
+EXBA is a high-performance, WebAssembly-first web framework designed to bridge Rust-powered business logic with a reactive TypeScript frontend. It is optimized for applications requiring complex state transitions, heavy computation, and surgical UI updates.
 
-## 🧠 Philosophy: Two-Tier Execution Model
+## Architecture: Two-Tier Execution Model
 
-EXBA utilizes a dual-tier architecture to balance native performance with web flexibility:
+EXBA utilizes a dual-tier execution model to balance native performance with browser flexibility:
 
 1. **Tier 1: Rust-WASM Core (The Brain)**:
-   - Manages the **Canonical State** and complex business rules.
-   - Generates **IR (Intermediate Representation)** bundles for DOM mutations.
-   - Performs heavy-duty tree diffing and data processing.
+   - Manages the canonical state and core business rules.
+   - Generates Intermediate Representation (IR) bundles for DOM mutations.
+   - Performs computationally intensive tree diffing and data processing.
+
 2. **Tier 2: TypeScript Shell (The Interface)**:
-   - Reactive components with surgical DOM updates via a **Tree-Diffing Patcher**.
-   - Ergonomic API Proxy for zero-config WASM method calls.
-   - Seamless fallback logic if the WASM engine is unavailable.
+   - Reactive components with surgical DOM updates via a tree-diffing patcher.
+   - Type-safe proxy bridge for zero-configuration WebAssembly method calls.
+   - Resilient fallback logic (such as local storage state caching) to maintain reactivity if the WebAssembly engine is unavailable.
 
-## 🛠️ Key Features
+### Third-Party DOM Persistence
 
-- **Surgical Reactivity**: Signal-based state management with `createSignal`, `createComputed`, and automated batching.
-- **Unified Component Pattern**: Class-based Web Components with scoped styles and declarative prop-mapping.
-- **Ergonomic Bridge**: Call Rust methods directly as `EXBA.api.methodName(...)` using our Type-Safe Proxy.
-- **Tagged Templates**: Optimized rendering using the `html` tagged template literal.
-- **Persistent Management**: Built-in persistence for navigation, tabs, and global state.
+The framework's virtual DOM patcher supports the `data-persist` attribute. When applied to container elements, it instructs the patcher to preserve dynamically injected sub-trees. This allows seamless integration of third-party libraries (such as Cytoscape.js and Vis-Network) without their DOM states being overwritten during component state updates.
 
-## 🚀 Getting Started
+## Key Features
+
+- **Surgical Reactivity**: Signal-based state management with automatic dependency tracking, computed states, and batching.
+- **Unified Component Pattern**: Class-based Web Components with static property declarations and scoped, auto-injected style objects.
+- **WASM Bridge**: Direct execution of Rust methods via `EXBA.api.methodName(...)`.
+- **Tagged Templates**: Structured templates compiled via the `html` tagged literal for efficient DOM patching.
+- **Robust Persistence**: Built-in persistence layers for application sessions, navigation, and user data.
+
+## Getting Started
 
 ### Installation
+
+Install dependencies using your preferred package manager:
+
 ```bash
-npm install
+bun install
 ```
 
-### Development (WASM + Frontend)
+### Development Workflow
+
+Build the WebAssembly module and start the development server:
+
 ```bash
-# Build WASM and start the dev server
-npm run build
-npm run dev
+bun run build
+bun run dev
 ```
 
-### Testing
+### Verification
+
+Run the integration and core test suite:
+
 ```bash
-npm test
+bun run test
 ```
 
-## 🛠️ Technical Stack
-- **Core**: Rust 1.75+ (wasm-bindgen, serde)
+## Technical Stack
+
+- **Core**: Rust (wasm-bindgen, serde)
 - **Frontend**: TypeScript, Custom Web Components
 - **Styling**: Unified Goober-based design tokens
 - **Build System**: Rsbuild / Rspack
-- **Verification**: Vitest (28+ integration and core tests)
+- **Test Suite**: Vitest (integration and unit testing)
 
-## 📋 Example Component
+## Code Example: Reactive Component
+
+The following example demonstrates a custom component with static properties, scoped styles, and lifecycle hooks:
 
 ```typescript
-import { ExbaComponent, html, EXBA } from '../framework';
+import { ExbaComponent, html } from '../framework';
 
 export class MyCounter extends ExbaComponent {
-  // 1. Reactive Prop Definition
+  // Define observed properties
   static props = { initial: 'number' };
 
-  // 2. Object-based Scoped Styles
+  // Define scoped stylesheet rules
   static styles = {
     container: 'padding: 1rem; border: 1px solid var(--exba-border);',
-    btn: 'background: var(--exba-primary); color: white; border-radius: 0.5rem;'
+    btn: 'background: var(--exba-primary); color: white; border-radius: 0.5rem; padding: 0.5rem 1rem;'
   };
 
-  // 3. Reactive Lifecycle & Logic
   protected onMount() {
     this.count = this.useSignal(this.state.initial || 0);
   }
@@ -82,9 +97,14 @@ export class MyCounter extends ExbaComponent {
 }
 ```
 
-## 📚 Component Library
-The framework includes several high-level reactive primitives:
-- **Kanban Board**: WASM-managed state transitions with glassmorphism UI.
-- **Activity Feed**: Live signal-driven feed tracking global application events.
-- **Web Neofetch**: Hardware and system info gathering via Rust bridge.
-- **Interactive UI**: Accordion, Drawer, and Tab Management systems.
+## Component Library
+
+The repository contains pre-built reactive component demonstrations:
+
+- **Kanban Board**: Drag-and-drop task workflow with local storage persistence and card editing capability.
+- **Mindmap (Cytoscape.js)**: Interactive graph visualization utilizing the COSE layout physics engine with dynamic node addition and image export.
+- **Mindmap (Vis-Network)**: Interactive spring physics simulator with canvas export capabilities.
+- **Monthly Date Picker**: Month-by-month calendar view with quick presets and date selection.
+- **Activity Feed**: Signal-driven event tracking component logging system changes.
+- **Web Neofetch**: Hardware and operating system metrics collector.
+- **UI Primitives**: Accordions, Drawers, and Tab Bars with persistent state selectors.
