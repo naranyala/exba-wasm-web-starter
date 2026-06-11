@@ -1,0 +1,18 @@
+{
+  "name": "docs-gen",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "scanner": "bun run ./src/index.ts",
+    "ui:dev": "rsbuild dev",
+    "ui:build": "rsbuild build"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "^2.0.9",
+    "@types/node": "^25.9.3",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "@rsbuild/plugin-type-check": "^1.4.0"
+  }
+}

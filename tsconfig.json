@@ -5,6 +5,14 @@
     "noEmit": true,
     "skipLibCheck": true,
     "useDefineForClassFields": true,
+    "baseUrl": ".",
+    "paths": {
+      "@core/*": ["core/*"],
+      "@bridge/*": ["bridge/*"],
+      "@components/*": ["components/*"],
+      "@shell/*": ["shell/*"],
+      "@utils/*": ["utils/*"]
+    },
 
     /* modules */
     "moduleDetection": "force",
@@ -19,5 +27,5 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["src"]
+  "include": ["core", "bridge", "components", "shell", "utils"]
 }

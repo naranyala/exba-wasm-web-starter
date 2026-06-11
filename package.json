@@ -4,13 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "cd wasm-src && wasm-pack build --target web --out-dir ../public/wasm && cd .. && rsbuild build",
+    "build": "cd wasm && wasm-pack build --target web --out-dir ../public/wasm && cd .. && rsbuild build",
     "check": "biome check --write",
     "dev": "rsbuild",
     "format": "biome format --write",
     "preview": "rsbuild preview",
     "test": "vitest",
-    "docs:gen": "bun run ./docs-gen/src/index.ts src docs",
+    "docs:gen": "cd docs-api-generator && bun run scanner ../core ../components ../shell ../bridge ../utils ../wasm/src ./ui/src && bun run ui:build",
     "docs:serve": "bun x serve docs"
   },
   "devDependencies": {
