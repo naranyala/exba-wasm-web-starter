@@ -202,6 +202,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       path: '/api-leaflet-turf',
       component: 'exba-leaflet-turf',
     });
+    router.register({ path: '/vega-lite', component: 'exba-vega-lite' });
+    router.register({ path: '/wavesurfer', component: 'exba-wavesurfer' });
 
     // Browser API Demos
     router.register({ path: '/api-audio', component: 'exba-audio-demo' });

@@ -3,6 +3,47 @@ import { updateResult } from '@shell/utils';
 
 export const MENU_CATEGORIES = [
   {
+    id: 'component-integration',
+    label: 'Component Integration',
+    items: [
+      {
+        id: 'cytoscape-mindmap',
+        label: 'Mindmap (Cytoscape)',
+        icon: '🕸️',
+        code: `// Cytoscape Mindmap`,
+        component: 'exba-cytoscape-mindmap',
+      },
+      {
+        id: 'vis-mindmap',
+        label: 'Mindmap (Vis-Network)',
+        icon: '🧬',
+        code: `// Vis-Network Mindmap`,
+        component: 'exba-vis-mindmap',
+      },
+      {
+        id: 'api-leaflet-turf',
+        label: 'Leaflet + Turf.js',
+        icon: '🗺️',
+        code: `// Leaflet + Turf.js Integration`,
+        component: 'exba-leaflet-turf',
+      },
+      {
+        id: 'vega-lite',
+        label: 'Vega-Lite Charts',
+        icon: '📊',
+        code: `// Vega-Lite Integration`,
+        component: 'exba-vega-lite',
+      },
+      {
+        id: 'wavesurfer',
+        label: 'Audio Waveform',
+        icon: '🌊',
+        code: `// Wavesurfer.js Audio Player`,
+        component: 'exba-wavesurfer',
+      },
+    ],
+  },
+  {
     id: 'component-examples',
     label: 'Component Examples',
     items: [
@@ -82,33 +123,6 @@ export const MENU_CATEGORIES = [
         icon: '🖥️',
         code: `await EXBA.callBridge('process_ir', { type: 'SystemFetch' })`,
         component: 'exba-neofetch',
-      },
-    ],
-  },
-  {
-    id: 'component-integration',
-    label: 'Component Integration',
-    items: [
-      {
-        id: 'cytoscape-mindmap',
-        label: 'Mindmap (Cytoscape)',
-        icon: '🕸️',
-        code: `// Cytoscape Mindmap`,
-        component: 'exba-cytoscape-mindmap',
-      },
-      {
-        id: 'vis-mindmap',
-        label: 'Mindmap (Vis-Network)',
-        icon: '🧬',
-        code: `// Vis-Network Mindmap`,
-        component: 'exba-vis-mindmap',
-      },
-      {
-        id: 'api-leaflet-turf',
-        label: 'Leaflet + Turf.js',
-        icon: '🗺️',
-        code: `// Leaflet + Turf.js Integration`,
-        component: 'exba-leaflet-turf',
       },
     ],
   },

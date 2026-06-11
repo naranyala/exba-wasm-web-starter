@@ -1,6 +1,7 @@
 import { Context } from '@core/reactivity/context';
 import { patch, type TemplateResult } from '@core/dom/dom';
 import { EXBA } from '@core/lifecycle/exba';
+import { effect, untrack, signal, flushQueue } from '@core/reactivity';
 
 /**
  * Represents the internal reactive state of a component.
@@ -29,6 +30,9 @@ export abstract class ExbaComponent extends HTMLElement {
   protected activeSubscriptions: Array<() => void> = [];
   /** Internal reactive state object */
   protected state: ComponentState = {};
+  
+  private renderEffectDispose: (() => void) | null = null;
+  private _updateTrigger = signal(0);
 
   /**
    * Define the properties the component should observe.
@@ -128,7 +132,7 @@ export abstract class ExbaComponent extends HTMLElement {
    * Standard Web Component callback for when the element enters the DOM.
    */
   connectedCallback() {
-    this.safeUpdate();
+    this.setupRenderEffect();
     this.onMount();
   }
 
@@ -144,6 +148,10 @@ export abstract class ExbaComponent extends HTMLElement {
    * Automatically unsubscribes from all reactive signals and effects.
    */
   private cleanup() {
+    if (this.renderEffectDispose) {
+      this.renderEffectDispose();
+      this.renderEffectDispose = null;
+    }
     this.activeSubscriptions.forEach((unsub) => unsub());
     this.activeSubscriptions = [];
   }
@@ -164,7 +172,8 @@ export abstract class ExbaComponent extends HTMLElement {
     if (changed.length === 0) return;
 
     this.state = { ...this.state, ...newState };
-    this.safeUpdate();
+    this._updateTrigger.value++;
+    flushQueue();
     this.onUpdate(changed);
   }
 
@@ -218,49 +227,69 @@ export abstract class ExbaComponent extends HTMLElement {
     return slot ? slot.innerHTML : '';
   }
 
-  /**
-   * Internal method to perform the DOM update using the patch engine.
-   * Handles scoped style generation and error boundaries.
-   */
-  private async safeUpdate() {
+  private setupRenderEffect() {
+    if (this.renderEffectDispose) return;
+
     const root = this.shadowRoot || this;
     if (!root) return;
 
-    try {
-      const htmlOutput = this.render();
+    this.renderEffectDispose = effect(() => {
+      // Depend on updateTrigger for manual updates
+      this._updateTrigger.value;
 
-      // Generate style block from styles object or string
-      const stylesObj = (this.constructor as typeof ExbaComponent).styles;
-      let styleContent = '';
-      if (typeof stylesObj === 'string') {
-        styleContent = stylesObj;
-      } else if (stylesObj) {
-        styleContent = Object.entries(stylesObj)
-          .map(([cls, rules]) => `.${cls} { ${rules} }`)
-          .join('\n');
-      }
-      const styleTag = styleContent ? `<style>${styleContent}</style>` : '';
+      try {
+        const htmlOutput = this.render();
 
-      if (typeof htmlOutput === 'string') {
-        const fullHTML = `${styleTag}${htmlOutput}`;
-        await patch(root, fullHTML);
-      } else {
-        // If it's a TemplateResult, we prepend the style tag to the first string segment
-        const newStrings = [...htmlOutput.strings] as any;
-        newStrings[0] = styleTag + newStrings[0];
-        await patch(root, { ...htmlOutput, strings: newStrings });
+        // Generate style block from styles object or string
+        const stylesObj = (this.constructor as typeof ExbaComponent).styles;
+        let styleContent = '';
+        if (typeof stylesObj === 'string') {
+          styleContent = stylesObj;
+        } else if (stylesObj) {
+          styleContent = Object.entries(stylesObj)
+            .map(([cls, rules]) => `.${cls} { ${rules} }`)
+            .join('\n');
+        }
+        const styleTag = styleContent ? `<style>${styleContent}</style>` : '';
+
+        let finalOutput: string | TemplateResult;
+        if (typeof htmlOutput === 'string') {
+          finalOutput = `${styleTag}${htmlOutput}`;
+        } else {
+          const newStrings = [...htmlOutput.strings] as any;
+          newStrings[0] = styleTag + newStrings[0];
+          finalOutput = { ...htmlOutput, strings: newStrings };
+        }
+
+        untrack(() => {
+          patch(root, finalOutput).catch((e) => {
+            console.error(
+              `[EXBA] Render error in <${this.tagName.toLowerCase()}>:`,
+              e,
+            );
+            root.innerHTML = `
+              <div style="padding: 0.5rem; color: #ef4444; font-size: 0.8125rem; font-family: monospace;">
+                Render error: ${e instanceof Error ? e.message : String(e)}
+              </div>
+            `;
+          });
+        });
+      } catch (e) {
+        console.error(
+          `[EXBA] Render error in <${this.tagName.toLowerCase()}>:`,
+          e,
+        );
+        root.innerHTML = `
+          <div style="padding: 0.5rem; color: #ef4444; font-size: 0.8125rem; font-family: monospace;">
+            Render error: ${e instanceof Error ? e.message : String(e)}
+          </div>
+        `;
       }
-    } catch (e) {
-      console.error(
-        `[EXBA] Render error in <${this.tagName.toLowerCase()}>:`,
-        e,
-      );
-      root.innerHTML = `
-        <div style="padding: 0.5rem; color: #ef4444; font-size: 0.8125rem; font-family: monospace;">
-          Render error: ${e instanceof Error ? e.message : String(e)}
-        </div>
-      `;
-    }
+    });
+  }
+
+  private safeUpdate() {
+    this._updateTrigger.value++;
   }
 
   /**
@@ -292,11 +321,6 @@ export abstract class ExbaComponent extends HTMLElement {
    * @param key Optional unique key
    */
   protected useSignal<T>(initialValue: T, key?: string) {
-    const signal = EXBA.createSignal(initialValue, key);
-    this.createEffect(signal.key, (val) => {
-      // Force update when signal changes if it's not already handled by local state
-      this.safeUpdate();
-    });
-    return signal;
+    return EXBA.createSignal(initialValue, key);
   }
 }

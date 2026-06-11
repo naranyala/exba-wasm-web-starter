@@ -25,12 +25,19 @@
     "vitest": "^4.1.8"
   },
   "dependencies": {
+    "@tabler/icons": "^3.44.0",
     "@turf/turf": "^7.3.5",
     "cytoscape": "^3.34.0",
     "goober": "^2.1.19",
+    "iconoir": "^7.11.0",
     "immer": "^11.1.8",
     "leaflet": "^1.9.4",
+    "lucide-static": "^1.17.0",
+    "vega": "^6.2.0",
+    "vega-embed": "^7.1.0",
+    "vega-lite": "^6.4.3",
     "vis-network": "^10.1.0",
+    "wavesurfer.js": "^7.12.7",
     "zod": "^4.4.3"
   }
 }

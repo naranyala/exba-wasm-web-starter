@@ -2,6 +2,7 @@ import type { ExbaBridge } from '@bridge/types';
 import { IRProcessor } from '@core/dom/processor';
 import { ResilienceManager } from '@core/lifecycle/resilience';
 import type { IRBundle } from '@core/dom/schema';
+import { signal, computed, batch, type Signal } from '@core/reactivity';
 
 /**
  * EXBA (Extended Browser Api) Core Class
@@ -21,6 +22,8 @@ export class EXBA {
   static wasmModule: any = null;
   /** Registry for signal subscriptions, keyed by signal ID */
   static subscriptions = new Map<string, Set<(val: any) => void>>();
+  /** Registry for global signals, keyed by signal ID */
+  static globalSignals = new Map<string, Signal<any>>();
   /** Registry for global event listeners */
   static eventListeners = new Map<string, Set<(data: any) => void>>();
 
@@ -39,6 +42,13 @@ export class EXBA {
     }
   }
 
+  private static getGlobalSignal<T>(key: string, initialValue?: T): Signal<T> {
+    if (!EXBA.globalSignals.has(key)) {
+      EXBA.globalSignals.set(key, signal(initialValue as T));
+    }
+    return EXBA.globalSignals.get(key) as Signal<T>;
+  }
+
   // ─── Signal System ──────────────────────────────────────────
   /**
    * Subscribes to changes of a specific signal/key.
@@ -47,11 +57,8 @@ export class EXBA {
    * @returns An unsubscription function
    */
   static subscribe(key: string, callback: (val: any) => void) {
-    if (!EXBA.subscriptions.has(key)) {
-      EXBA.subscriptions.set(key, new Set());
-    }
-    EXBA.subscriptions.get(key)!.add(callback);
-    return () => EXBA.subscriptions.get(key)?.delete(callback);
+    const sig = EXBA.getGlobalSignal(key);
+    return sig.subscribe(callback);
   }
 
   /**
@@ -60,9 +67,8 @@ export class EXBA {
    * @param value The new value
    */
   static notify(key: string, value: any) {
-    EXBA.subscriptions.get(key)?.forEach((cb) => {
-      cb(value);
-    });
+    const sig = EXBA.getGlobalSignal(key);
+    sig.value = value;
   }
 
   // ─── Event System ───────────────────────────────────────────
@@ -205,8 +211,6 @@ export class EXBA {
   }
 
   // ─── Component Helpers ──────────────────────────────────────
-  private static isBatching = false;
-  private static pendingNotifications = new Set<string>();
 
   /**
    * Creates a reactive signal.
@@ -215,23 +219,17 @@ export class EXBA {
    * @returns An object with value getter/setter and subscribe method
    */
   static createSignal<T>(initialValue: T, key?: string) {
-    let val = initialValue;
     const signalKey = key || `sig_${Math.random().toString(36).substr(2, 9)}`;
+    const sig = EXBA.getGlobalSignal(signalKey, initialValue);
 
     return {
       get value() {
-        return val;
+        return sig.value;
       },
       set value(newVal: T) {
-        if (val === newVal) return;
-        val = newVal;
-        if (EXBA.isBatching) {
-          EXBA.pendingNotifications.add(signalKey);
-        } else {
-          EXBA.notify(signalKey, newVal);
-        }
+        sig.value = newVal;
       },
-      subscribe: (cb: (v: T) => void) => EXBA.subscribe(signalKey, cb),
+      subscribe: (cb: (v: T) => void) => sig.subscribe(cb),
       key: signalKey,
     };
   }
@@ -243,13 +241,24 @@ export class EXBA {
    * @returns A signal containing the computed value
    */
   static createComputed<T>(fn: () => T, dependencies: string[]) {
-    const signal = EXBA.createSignal(fn());
+    const signalKey = `comp_${Math.random().toString(36).substr(2, 9)}`;
+    const c = computed(fn);
+    EXBA.globalSignals.set(signalKey, c as any);
+
     dependencies.forEach((dep) => {
-      EXBA.subscribe(dep, () => {
-        signal.value = fn();
+      const depSig = EXBA.getGlobalSignal(dep);
+      depSig.subscribe(() => {
+        // Explicit subscription keeps the computed reactive even if not read yet
       });
     });
-    return signal;
+
+    return {
+      get value() {
+        return c.value;
+      },
+      subscribe: (cb: (v: T) => void) => c.subscribe(cb),
+      key: signalKey,
+    };
   }
 
   /**
@@ -257,20 +266,6 @@ export class EXBA {
    * @param fn Synchronous function containing multiple signal updates
    */
   static batch(fn: () => void) {
-    EXBA.isBatching = true;
-    try {
-      fn();
-    } finally {
-      EXBA.isBatching = false;
-      const keys = Array.from(EXBA.pendingNotifications);
-      EXBA.pendingNotifications.clear();
-      keys.forEach((key) => {
-        // We don't have the "current value" here in a unified way if it's just keys,
-        // but notify() handles calling subscribers.
-        // For ReactiveStateProxy integration, it works because notify triggers the cb
-        // which usually pulls from state.
-        EXBA.notify(key, null);
-      });
-    }
+    batch(fn);
   }
 }
