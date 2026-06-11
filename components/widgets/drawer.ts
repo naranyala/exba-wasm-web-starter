@@ -52,9 +52,9 @@ export class DrawerComponent extends ExbaComponent {
 
     return `
       <div class="container">
-        <button class="btnOpen btnOpenHover" onclick="this.getRootNode().host.open()">Open Drawer</button>
+        <button class="btnOpen btnOpenHover">Open Drawer</button>
         
-        <div class="backdrop ${isOpen ? 'backdropVisible' : ''}" onclick="this.getRootNode().host.close()"></div>
+        <div class="backdrop ${isOpen ? 'backdropVisible' : ''}"></div>
         
         <div class="drawer ${isOpen ? 'drawerVisible' : ''}">
           <div class="handle"></div>
@@ -62,7 +62,7 @@ export class DrawerComponent extends ExbaComponent {
           <div class="content">
             This is a bottom-up sliding panel primitive. It utilizes hardware-accelerated transforms for smooth performance and a backdrop filter for depth. Perfect for mobile menus or detailed inspection panels.
           </div>
-          <button class="btnClose btnCloseHover" onclick="this.getRootNode().host.close()">Dismiss</button>
+          <button class="btnClose btnCloseHover">Dismiss</button>
         </div>
       </div>
     `;
@@ -72,7 +72,15 @@ export class DrawerComponent extends ExbaComponent {
     super.connectedCallback();
     (window as any).openDrawer = () => this.open();
     (window as any).closeDrawer = () => this.close();
+
+    this.shadowRoot?.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.btnOpen')) {
+        this.open();
+      } else if (target.closest('.backdrop') || target.closest('.btnClose')) {
+        this.close();
+      }
+    });
   }
 }
 
-customElements.define('exba-drawer', DrawerComponent);

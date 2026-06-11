@@ -73,16 +73,16 @@ export class AccordionComponent extends ExbaComponent {
         ${items
           .map(
             (item, i) => `
-          <div class="item ${active === i ? 'itemActive' : ''}">
-            <div class="header headerHover" onclick="this.getRootNode().host.toggle(${i})">
-              <span class="title">${item.title}</span>
-              <span class="icon ${active === i ? 'iconActive' : ''}">▼</span>
+            <div class="item ${active === i ? 'itemActive' : ''}">
+              <div class="header headerHover">
+                <span class="title">${item.title}</span>
+                <span class="icon ${active === i ? 'iconActive' : ''}">▼</span>
+              </div>
+              <div class="content ${active === i ? 'contentVisible' : ''}">
+                <div class="text">${item.content}</div>
+              </div>
             </div>
-            <div class="content ${active === i ? 'contentVisible' : ''}">
-              <div class="text">${item.content}</div>
-            </div>
-          </div>
-        `,
+          `,
           )
           .join('')}
       </div>
@@ -92,7 +92,18 @@ export class AccordionComponent extends ExbaComponent {
   connectedCallback() {
     super.connectedCallback();
     (window as any).toggleAccordion = (i: number) => this.toggle(i);
+
+    this.shadowRoot?.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const header = target.closest('.header');
+      if (header) {
+        const headers = Array.from(this.shadowRoot?.querySelectorAll('.header') || []);
+        const index = headers.indexOf(header);
+        if (index !== -1) {
+          this.toggle(index);
+        }
+      }
+    });
   }
 }
 
-customElements.define('exba-accordion', AccordionComponent);

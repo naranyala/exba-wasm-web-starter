@@ -217,49 +217,49 @@ export class DatePickerComponent extends ExbaComponent {
         <div class="card">
           <header class="header">
             <div class="monthNav">
-              <button class="navBtn" onclick="this.getRootNode().host.prevMonth()">◀</button>
+              <button class="navBtn" data-action="prev">◀</button>
               <span class="monthTitle">${monthNames[month]} ${year}</span>
-              <button class="navBtn" onclick="this.getRootNode().host.nextMonth()">▶</button>
+              <button class="navBtn" data-action="next">▶</button>
             </div>
-            <button class="todayBtn" onclick="this.getRootNode().host.setToday()">📍 Today</button>
+            <button class="todayBtn" data-action="today">📍 Today</button>
           </header>
-
+ 
           <div class="grid">
             ${dayNames.map((name) => `<span class="dayName">${name}</span>`).join('')}
             ${days
               .map((d) => {
                 const isToday = d.dateStr === todayStr;
                 const isSelected = d.dateStr === selected;
-
+ 
                 let cellClasses = 'cell';
                 if (d.type === 'current') {
                   cellClasses += ' cellCurrent';
                 } else {
                   cellClasses += ' cellOutside';
                 }
-
+ 
                 if (isToday) {
                   cellClasses += ' cellToday';
                 }
                 if (isSelected) {
                   cellClasses += ' cellSelected';
                 }
-
+ 
                 return `
-                  <div class="${cellClasses}" onclick="this.getRootNode().host.selectDate('${d.dateStr}')">
+                  <div class="${cellClasses}" data-date="${d.dateStr}">
                     ${d.day}
                   </div>
                 `;
               })
               .join('')}
           </div>
-
+ 
           <div class="presets">
-            <button class="presetBtn" onclick="this.getRootNode().host.setPreset(0)">Today</button>
-            <button class="presetBtn" onclick="this.getRootNode().host.setPreset(1)">Tomorrow</button>
-            <button class="presetBtn" onclick="this.getRootNode().host.setPreset(7)">Next Week</button>
+            <button class="presetBtn" data-preset="0">Today</button>
+            <button class="presetBtn" data-preset="1">Tomorrow</button>
+            <button class="presetBtn" data-preset="7">Next Week</button>
           </div>
-
+ 
           <div class="displayCard">
             <div class="displayLabel">Selected Date</div>
             <div class="displayValue">${formattedDate}</div>
@@ -278,7 +278,39 @@ export class DatePickerComponent extends ExbaComponent {
     (window as any).dispatchDatePickerToday = () => this.setToday();
     (window as any).dispatchDatePickerPreset = (offset: number) =>
       this.setPreset(offset);
+
+    this.shadowRoot?.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+
+      const navBtn = target.closest('.navBtn');
+      if (navBtn) {
+        const action = navBtn.getAttribute('data-action');
+        if (action === 'prev') this.prevMonth();
+        if (action === 'next') this.nextMonth();
+        return;
+      }
+
+      const todayBtn = target.closest('.todayBtn');
+      if (todayBtn) {
+        this.setToday();
+        return;
+      }
+
+      const presetBtn = target.closest('.presetBtn');
+      if (presetBtn) {
+        const offset = Number(presetBtn.getAttribute('data-preset'));
+        this.setPreset(offset);
+        return;
+      }
+
+      const cell = target.closest('.cell');
+      if (cell) {
+        const dateStr = cell.getAttribute('data-date');
+        if (dateStr) {
+          this.selectDate(dateStr);
+        }
+      }
+    });
   }
 }
 
-customElements.define('exba-datepicker', DatePickerComponent);

@@ -1,43 +1,23 @@
 import '@shell/theme/style.css';
-import '@components/shell/tab-bar';
-import '@components/shell/status-bar';
-import '@components/demos/settings';
-import '@components/demos/profile';
-import '@components/demos/analytics';
-import '@components/demos/terminal';
-import '@components/demos/neofetch';
-import '@components/demos/kanban';
-import '@components/widgets/datepicker';
-import '@components/demos/cytoscape-mindmap';
-import '@components/demos/vis-mindmap';
-import '@components/demos/activity-feed';
-import '@components/widgets/accordion';
-import '@components/widgets/drawer';
-import '@components/widgets/code-block';
-import '@components/demos/browser-api/audio-demo';
-import '@components/demos/browser-api/canvas-demo';
-import '@components/demos/browser-api/storage-demo';
-import '@components/demos/browser-api/geo-demo';
-import '@components/demos/browser-api/fullscreen-demo';
-import '@components/demos/browser-api/clipboard-demo';
-import '@components/demos/browser-api/battery-demo';
-import '@components/demos/browser-api/network-demo';
-import '@components/demos/browser-api/wake-lock-demo';
-import '@components/demos/browser-api/eyedropper-demo';
-import '@components/shell/home';
+import { registerInternal } from '@components/internal';
+import { registerWidgets } from '@components/widgets';
+import { registerFeatures } from '@components/features';
+import { registerIntegrations } from '@components/integrations';
+import { registerBrowserApiDemos } from '@components/browser-api';
+
 import { MENU_CATEGORIES, MENU_ITEMS } from '@shell/constants';
 import { initApp, renderTabBar } from '@shell/view-grid';
 import { getExposedFunctions, setupBridge } from '@bridge/manager';
-import { ExbaGreeting } from '@components/widgets/exba-greeting';
-import { WasmModal } from '@components/shell/modal';
-import { StatusBar } from '@components/shell/status-bar';
 import { EXBA } from '@core/lifecycle/exba';
 import { Router } from '@core/routing/router';
 import { ReactiveStateProxy } from '@core/reactivity/proxy';
 
-EXBA.register('exba-greeting', ExbaGreeting);
-EXBA.register('status-bar', StatusBar);
-EXBA.register('wasm-modal', WasmModal);
+// Perform all component registrations via category aggregators
+registerInternal();
+registerWidgets();
+registerFeatures();
+registerIntegrations();
+registerBrowserApiDemos();
 
 async function waitForApp() {
   return new Promise<HTMLElement>((resolve, reject) => {
@@ -191,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       component: 'exba-home',
     });
 
-    // Register Component Example Routes
+    // Component Example Routes
     router.register({ path: '/settings', component: 'exba-settings' });
     router.register({ path: '/profile', component: 'exba-profile' });
     router.register({ path: '/analytics', component: 'exba-analytics' });
@@ -199,42 +179,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     router.register({ path: '/neofetch', component: 'exba-neofetch' });
     router.register({ path: '/kanban', component: 'exba-kanban' });
     router.register({ path: '/datepicker', component: 'exba-datepicker' });
+    router.register({ path: '/activity', component: 'exba-activity-feed' });
+    router.register({ path: '/accordion', component: 'exba-accordion' });
+    router.register({ path: '/drawer', component: 'exba-drawer' });
+    router.register({
+      path: '/code-block',
+      component: 'exba-code-block',
+      props: {
+        language: 'rust',
+        title: 'WASM Logic Core',
+        code: `#[wasm_bindgen]\npub fn process_ir(command_json: &str) -> Result<JsValue, JsValue> {\n    info!(\"IR Command received: {}\", command_json);\n\n    let command: IRCommand = match serde_json::from_str(command_json) {\n        Ok(cmd) => cmd,\n        Err(e) => return Ok(serde_wasm_bindgen::to_value(&IRResult::Error { message: e.to_string() })?)\n    };\n\n    let result = process_ir_logic(command);\n    Ok(serde_wasm_bindgen::to_value(&result)?)\n}`,
+      },
+    });
+
+    // Component Integration Demos
     router.register({
       path: '/cytoscape-mindmap',
       component: 'exba-cytoscape-mindmap',
     });
     router.register({ path: '/vis-mindmap', component: 'exba-vis-mindmap' });
-    router.register({ path: '/activity', component: 'exba-activity-feed' });
-    router.register({ path: '/accordion', component: 'exba-accordion' });
-    router.register({ path: '/drawer', component: 'exba-drawer' });
-    router.register({ path: '/code-block', component: 'exba-code-block', props: {
-      language: 'rust',
-      title: 'WASM Logic Core',
-      code: `#[wasm_bindgen]
-pub fn process_ir(command_json: &str) -> Result<JsValue, JsValue> {
-    info!("IR Command received: {}", command_json);
-
-    let command: IRCommand = match serde_json::from_str(command_json) {
-        Ok(cmd) => cmd,
-        Err(e) => return Ok(serde_wasm_bindgen::to_value(&IRResult::Error { message: e.to_string() })?)
-    };
-
-    let result = process_ir_logic(command);
-    Ok(serde_wasm_bindgen::to_value(&result)?)
-}`
-    }});
+    router.register({
+      path: '/api-leaflet-turf',
+      component: 'exba-leaflet-turf',
+    });
 
     // Browser API Demos
     router.register({ path: '/api-audio', component: 'exba-audio-demo' });
     router.register({ path: '/api-canvas', component: 'exba-canvas-demo' });
     router.register({ path: '/api-storage', component: 'exba-storage-demo' });
     router.register({ path: '/api-geo', component: 'exba-geo-demo' });
-    router.register({ path: '/api-fullscreen', component: 'exba-fullscreen-demo' });
-    router.register({ path: '/api-clipboard', component: 'exba-clipboard-demo' });
+    router.register({
+      path: '/api-fullscreen',
+      component: 'exba-fullscreen-demo',
+    });
+    router.register({
+      path: '/api-clipboard',
+      component: 'exba-clipboard-demo',
+    });
     router.register({ path: '/api-battery', component: 'exba-battery-demo' });
     router.register({ path: '/api-network', component: 'exba-network-demo' });
     router.register({ path: '/api-wake-lock', component: 'exba-wake-lock-demo' });
-    router.register({ path: '/api-eyedropper', component: 'exba-eyedropper-demo' });
+    router.register({
+      path: '/api-eyedropper',
+      component: 'exba-eyedropper-demo',
+    });
 
     const tabs = new Map<string, { label: string; action: () => void }>();
     let activeTabId: string | null = null;
@@ -318,9 +306,23 @@ pub fn process_ir(command_json: &str) -> Result<JsValue, JsValue> {
     (window as any).dispatchMenuAction = (id: string) => {
       const item = MENU_ITEMS.find((i) => i.id === id);
       if (item) {
-        tabs.set(item.id, { label: item.label, action: item.action });
+        tabs.set(item.id, { 
+          label: item.label, 
+          action: () => {
+            const container = document.getElementById('view-container');
+            if (container && item.component) {
+              container.innerHTML = `<${item.component}></${item.component}>`;
+            }
+          } 
+        });
         activeTabId = item.id;
-        item.action();
+        
+        // Execute the action (mount the component)
+        const container = document.getElementById('view-container');
+        if (container && item.component) {
+          container.innerHTML = `<${item.component}></${item.component}>`;
+        }
+
         router.navigate(`/${item.id}`);
         renderTabBar(tabs, activeTabId);
         saveTabs();

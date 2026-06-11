@@ -43,22 +43,50 @@ export class CodeBlockComponent extends ExbaComponent {
    * @returns HTML string with highlighted tokens.
    */
   private highlight(code: string): string {
-    return code
+    const comments: string[] = [];
+    const strings: string[] = [];
+
+    // Escape HTML special chars first
+    let escaped = code
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      // Comments
-      .replace(/(\/\/.*)/g, '<span class="comment">$1</span>')
-      // Strings
-      .replace(/(['"`])(.*?)\1/g, '<span class="string">$1$2$1</span>')
-      // Keywords
-      .replace(/\b(export|import|const|let|var|function|return|if|else|for|while|class|interface|type|enum|struct|pub|fn|use|mod|impl|match|move|async|await)\b/g, '<span class="keyword">$1</span>')
-      // Types
-      .replace(/\b(string|number|boolean|any|void|Self|String|i32|f64|Vec|Option|Result|Mutex|u32)\b/g, '<span class="type">$1</span>')
-      // Numbers
-      .replace(/\b(\d+)\b/g, '<span class="number">$1</span>')
-      // Function calls
-      .replace(/\b([a-zA-Z0-9_]+)(?=\s*\()/g, '<span class="func">$1</span>');
+      .replace(/>/g, '&gt;');
+
+    // 1. Extract and placeholder comments
+    escaped = escaped.replace(/(\/\/.*)/g, (match) => {
+      comments.push(match);
+      return `__COMMENT_PLACEHOLDER_${comments.length - 1}__`;
+    });
+
+    // 2. Extract and placeholder strings
+    escaped = escaped.replace(/(['"`])(.*?)\1/g, (match) => {
+      strings.push(match);
+      return `__STRING_PLACEHOLDER_${strings.length - 1}__`;
+    });
+
+    // 3. Highlight keywords
+    escaped = escaped.replace(/\b(export|import|const|let|var|function|return|if|else|for|while|class|interface|type|enum|struct|pub|fn|use|mod|impl|match|move|async|await)\b/g, '<span class="keyword">$1</span>');
+
+    // 4. Highlight types
+    escaped = escaped.replace(/\b(string|number|boolean|any|void|Self|String|i32|f64|Vec|Option|Result|Mutex|u32)\b/g, '<span class="type">$1</span>');
+
+    // 5. Highlight numbers
+    escaped = escaped.replace(/\b(\d+)\b/g, '<span class="number">$1</span>');
+
+    // 6. Highlight function calls
+    escaped = escaped.replace(/\b([a-zA-Z0-9_]+)(?=\s*\()/g, '<span class="func">$1</span>');
+
+    // 7. Restore strings
+    escaped = escaped.replace(/__STRING_PLACEHOLDER_(\d+)__/g, (_, index) => {
+      return `<span class="string">${strings[Number(index)]}</span>`;
+    });
+
+    // 8. Restore comments
+    escaped = escaped.replace(/__COMMENT_PLACEHOLDER_(\d+)__/g, (_, index) => {
+      return `<span class="comment">${comments[Number(index)]}</span>`;
+    });
+
+    return escaped;
   }
 
   /**
@@ -93,12 +121,21 @@ export class CodeBlockComponent extends ExbaComponent {
             <span class="lang">${lang}</span>
             <span class="title">${title}</span>
           </div>
-          <button id="copy-btn" class="copyBtn" onclick="this.getRootNode().host.copy()">Copy</button>
+          <button id="copy-btn" class="copyBtn">Copy</button>
         </header>
         <pre class="pre"><code>${this.highlight(code)}</code></pre>
       </div>
     `;
   }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.shadowRoot?.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.id === 'copy-btn' || target.closest('#copy-btn')) {
+        this.copy();
+      }
+    });
+  }
 }
 
-customElements.define('exba-code-block', CodeBlockComponent);
