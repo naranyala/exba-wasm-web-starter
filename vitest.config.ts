@@ -4,11 +4,11 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   resolve: {
     alias: {
-      '@core': path.resolve(__dirname, './core'),
-      '@bridge': path.resolve(__dirname, './bridge'),
-      '@components': path.resolve(__dirname, './components'),
-      '@shell': path.resolve(__dirname, './shell'),
-      '@utils': path.resolve(__dirname, './utils'),
+      '@core': path.resolve(__dirname, './src/core'),
+      '@bridge': path.resolve(__dirname, './src/bridge'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@shell': path.resolve(__dirname, './src/shell'),
+      '@utils': path.resolve(__dirname, './src/utils'),
     },
   },
   test: {

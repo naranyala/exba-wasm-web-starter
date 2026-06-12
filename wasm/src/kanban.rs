@@ -28,14 +28,17 @@ pub fn get_tasks() -> Vec<KanbanTask> {
     TASKS.lock().unwrap().clone()
 }
 
-pub fn move_task(id: &str) -> Vec<KanbanTask> {
+pub fn move_task(id: &str, col: &str) -> Vec<KanbanTask> {
     let mut tasks = TASKS.lock().unwrap();
     if let Some(task) = tasks.iter_mut().find(|t| t.id == id) {
-        let sequence = vec!["todo", "in-progress", "done", "todo"];
-        if let Some(pos) = sequence.iter().position(|&s| s == task.col) {
-            task.col = sequence[pos + 1].to_string();
-        }
+        task.col = col.to_string();
     }
+    tasks.clone()
+}
+
+pub fn sync_tasks(new_tasks: Vec<KanbanTask>) -> Vec<KanbanTask> {
+    let mut tasks = TASKS.lock().unwrap();
+    *tasks = new_tasks;
     tasks.clone()
 }
 
@@ -56,5 +59,15 @@ pub fn add_task(title: String, priority: String, tags: Vec<String>) -> Vec<Kanba
 pub fn delete_task(id: &str) -> Vec<KanbanTask> {
     let mut tasks = TASKS.lock().unwrap();
     tasks.retain(|t| t.id != id);
+    tasks.clone()
+}
+
+pub fn edit_task(id: &str, title: String, priority: String, tags: Vec<String>) -> Vec<KanbanTask> {
+    let mut tasks = TASKS.lock().unwrap();
+    if let Some(task) = tasks.iter_mut().find(|t| t.id == id) {
+        task.title = title;
+        task.priority = priority;
+        task.tags = tags;
+    }
     tasks.clone()
 }

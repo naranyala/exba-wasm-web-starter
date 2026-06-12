@@ -5,14 +5,14 @@ const dirName = path.basename(process.cwd());
 export default defineConfig({
   source: {
     entry: {
-      index: './shell/main.ts',
+      index: './src/shell/main.ts',
     },
     alias: {
-      '@core': './core',
-      '@bridge': './bridge',
-      '@components': './components',
-      '@shell': './shell',
-      '@utils': './utils',
+      '@core': './src/core',
+      '@bridge': './src/bridge',
+      '@components': './src/components',
+      '@shell': './src/shell',
+      '@utils': './src/utils',
     },
     define: {
       __DIRNAME__: JSON.stringify(dirName),

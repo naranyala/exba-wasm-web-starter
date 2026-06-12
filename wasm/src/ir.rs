@@ -64,6 +64,8 @@ pub struct IRBundle {
 #[ts(export)]
 #[serde(tag = "type", content = "payload")]
 pub enum IRCommand {
+    SampleTaskFetch,
+    SampleTaskSubmit { input: String },
     Add { a: i32, b: i32 },
     Fibonacci { n: i32 },
     Factorial { n: i32 },
@@ -74,9 +76,11 @@ pub enum IRCommand {
     RulesQuery,
     SystemFetch,
     KanbanFetch,
-    MoveTask { id: String },
+    MoveTask { id: String, col: String },
     AddTask { title: String, priority: String, tags: Vec<String> },
     DeleteTask { id: String },
+    EditTask { id: String, title: String, priority: String, tags: Vec<String> },
+    SyncKanban { tasks: Vec<crate::kanban::KanbanTask> },
     PerformDiff { old_html: String, new_html: String },
 }
 
@@ -85,6 +89,7 @@ pub enum IRCommand {
 #[ts(export)]
 #[serde(tag = "type", content = "payload")]
 pub enum IRResult {
+    SampleTaskData(crate::sample_task::SampleTaskState),
     Number(i32),
     Void,
     Error { message: String },

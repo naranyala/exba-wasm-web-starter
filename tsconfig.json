@@ -7,11 +7,11 @@
     "useDefineForClassFields": true,
     "baseUrl": ".",
     "paths": {
-      "@core/*": ["core/*"],
-      "@bridge/*": ["bridge/*"],
-      "@components/*": ["components/*"],
-      "@shell/*": ["shell/*"],
-      "@utils/*": ["utils/*"]
+      "@core/*": ["src/core/*"],
+      "@bridge/*": ["src/bridge/*"],
+      "@components/*": ["src/components/*"],
+      "@shell/*": ["src/shell/*"],
+      "@utils/*": ["src/utils/*"]
     },
 
     /* modules */
@@ -27,5 +27,5 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["core", "bridge", "components", "shell", "utils"]
+  "include": ["src"]
 }

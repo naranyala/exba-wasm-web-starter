@@ -5,6 +5,7 @@ mod state;
 pub mod sys_info;
 pub mod kanban;
 pub mod dom_engine;
+pub mod sample_task;
 
 use wasm_bindgen::prelude::*;
 use tracing::{info, error, instrument};
@@ -31,6 +32,14 @@ pub fn start() {
 #[instrument]
 fn process_ir_logic(command: IRCommand) -> IRResult {
     match command {
+        IRCommand::SampleTaskFetch => {
+            info!("SampleTask state requested");
+            IRResult::SampleTaskData(sample_task::get_state())
+        },
+        IRCommand::SampleTaskSubmit { input } => {
+            info!("SampleTask state update requested: {}", input);
+            IRResult::SampleTaskData(sample_task::set_status(input))
+        },
         IRCommand::Add { a, b } => {
             info!("Adding {} and {}", a, b);
             IRResult::Number(a + b)
@@ -75,9 +84,9 @@ fn process_ir_logic(command: IRCommand) -> IRResult {
             info!("Kanban tasks requested");
             IRResult::KanbanData(kanban::get_tasks())
         },
-        IRCommand::MoveTask { id } => {
-            info!("Moving task: {}", id);
-            IRResult::KanbanData(kanban::move_task(&id))
+        IRCommand::MoveTask { id, col } => {
+            info!("Moving task: {} to {}", id, col);
+            IRResult::KanbanData(kanban::move_task(&id, &col))
         },
         IRCommand::AddTask { title, priority, tags } => {
             info!("Adding task: {}", title);
@@ -87,10 +96,34 @@ fn process_ir_logic(command: IRCommand) -> IRResult {
             info!("Deleting task: {}", id);
             IRResult::KanbanData(kanban::delete_task(&id))
         },
-        IRCommand::PerformDiff { .. } => {
+        IRCommand::EditTask { id, title, priority, tags } => {
+            info!("Editing task: {}", id);
+            IRResult::KanbanData(kanban::edit_task(&id, title, priority, tags))
+        },
+        IRCommand::SyncKanban { tasks } => {
+            info!("Syncing Kanban tasks ({} tasks)", tasks.len());
+            IRResult::KanbanData(kanban::sync_tasks(tasks))
+        },
+        IRCommand::PerformDiff { old_html, new_html } => {
             info!("DOM diffing requested (Tier 1)");
-            // Placeholder for Rust diffing implementation
-            IRResult::DiffResult(vec![])
+            let mut old_parser = crate::dom_engine::HtmlParser::new(&old_html);
+            let old_nodes = old_parser.parse_nodes();
+            let old_root = crate::dom_engine::DomNode::Element {
+                tag: "root".to_string(),
+                attrs: vec![],
+                children: old_nodes,
+            };
+
+            let mut new_parser = crate::dom_engine::HtmlParser::new(&new_html);
+            let new_nodes = new_parser.parse_nodes();
+            let new_root = crate::dom_engine::DomNode::Element {
+                tag: "root".to_string(),
+                attrs: vec![],
+                children: new_nodes,
+            };
+
+            let instructions = crate::dom_engine::diff(&old_root, &new_root);
+            IRResult::DiffResult(instructions)
         }
     }
 }
@@ -254,4 +287,26 @@ pub fn wasm_update_app_state(patch_json: &str) -> JsValue {
         }
     });
     wasm_get_app_state()
+}
+
+#[wasm_bindgen]
+pub fn wasm_get_exposed_commands() -> JsValue {
+    let commands = vec![
+        serde_json::json!({ "name": "Add", "description": "Add two integers (Rust WASM)", "payload": "{ a: i32, b: i32 }" }),
+        serde_json::json!({ "name": "Fibonacci", "description": "Calculate sequence Fibonacci index (WASM)", "payload": "{ n: i32 }" }),
+        serde_json::json!({ "name": "Factorial", "description": "Compute Factorial product of N (WASM)", "payload": "{ n: i32 }" }),
+        serde_json::json!({ "name": "ReverseString", "description": "Reverse a string value via Rust memory", "payload": "{ text: String }" }),
+        serde_json::json!({ "name": "PalindromeCheck", "description": "Determine palindrome correctness (WASM)", "payload": "{ text: String }" }),
+        serde_json::json!({ "name": "Greet", "description": "Greet and update the browser window title", "payload": "{ name: String }" }),
+        serde_json::json!({ "name": "SystemFetch", "description": "Query hardware diagnostics (WASM)", "payload": "None" }),
+        serde_json::json!({ "name": "KanbanFetch", "description": "Fetch Kanban tasks (WASM)", "payload": "None" }),
+        serde_json::json!({ "name": "MoveTask", "description": "Move Kanban task to column (WASM)", "payload": "{ id: String, col: String }" }),
+        serde_json::json!({ "name": "AddTask", "description": "Add new Kanban task (WASM)", "payload": "{ title: String, priority: String, tags: Vec<String> }" }),
+        serde_json::json!({ "name": "DeleteTask", "description": "Delete Kanban task by ID (WASM)", "payload": "{ id: String }" }),
+        serde_json::json!({ "name": "EditTask", "description": "Edit Kanban task details (WASM)", "payload": "{ id: String, title: String, priority: String, tags: Vec<String> }" }),
+        serde_json::json!({ "name": "SyncKanban", "description": "Sync local tasks with Rust memory (WASM)", "payload": "{ tasks: Vec<KanbanTask> }" }),
+        serde_json::json!({ "name": "SampleTaskFetch", "description": "Fetch Sample Task state (WASM)", "payload": "None" }),
+        serde_json::json!({ "name": "SampleTaskSubmit", "description": "Mutate Sample Task state (WASM)", "payload": "{ input: String }" }),
+    ];
+    serde_wasm_bindgen::to_value(&commands).unwrap()
 }
